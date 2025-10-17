@@ -20,3 +20,11 @@ Batch split images into smaller images in your browser.
 
 <img width="1420" alt="Screen Shot 2023-04-27 at 11 40 30 AM" src="https://user-images.githubusercontent.com/51462341/234931606-639d9891-142f-4475-a5e9-94d607d744f4.png">
 <img width="1420" alt="Screen Shot 2023-04-27 at 11 39 29 AM" src="https://user-images.githubusercontent.com/51462341/234931617-808b36e5-7048-43c4-8b37-825d0ed0cfbf.png">
+
+## Local Development
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and set your environment variables
+3. Run `npm install` to install dependencies
+4. Run `npm run dev` to start the development server
+5. Open `http://localhost:3000` in your browser
