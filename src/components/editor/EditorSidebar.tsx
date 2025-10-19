@@ -4,14 +4,16 @@ import UnderlineLink from '@/components/links/UnderlineLink';
 
 const EditorSidebar = () => {
   return (
-    <div className='flex h-screen w-full flex-col justify-center gap-9 overflow-y-auto bg-gray-900 px-4 text-white'>
-      <div className='scrollbar-hide flex h-screen flex-col justify-center gap-2 overflow-y-scroll'>
+    <div className='flex h-screen w-full flex-col bg-gray-900 px-4 py-4 text-white'>
+      <div className='sticky top-0 z-20 bg-gray-900 pb-2 pt-1'>
         <img
           src='/images/svg/Logo.svg'
           alt='logo'
-          className='mx-auto w-24 pb-2'
+          className='mx-auto w-24'
           style={{ filter: 'brightness(100)' }}
         />
+      </div>
+      <div className='scrollbar-hide flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto py-4'>
         <EditorImageInput />
         <EditorButtonCollection />
         <footer className='border-gray-700 pt-1 text-center text-xs'>

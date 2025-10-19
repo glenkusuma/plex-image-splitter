@@ -15,9 +15,9 @@ type Action =
   | { type: 'SPLIT_INTO_TWO_VERTICAL_COMPONENTS' }
   | { type: 'CLEAR_LINES' }
   | {
-      type: 'SET_LINE_POSITION';
-      payload: { index: number; align: Align; position: number };
-    }
+    type: 'SET_LINE_POSITION';
+    payload: { index: number; align: Align; position: number };
+  }
   | { type: 'ADD_NEW_HLINE'; payload?: { count?: number } }
   | { type: 'ADD_NEW_VLINE'; payload?: { count?: number } }
   | { type: 'REMOVE_HLINE' }
@@ -28,7 +28,20 @@ type Action =
   | { type: 'EXPORT' }
   | { type: 'SET_EXPORTING_FLAG'; payload: { exporting: boolean } }
   | { type: 'SET_EDITOR_ACTIVE' }
-  | { type: 'SET_EDITOR_INACTIVE' };
+  | { type: 'SET_EDITOR_INACTIVE' }
+  | { type: 'SET_SELECTED_LINE'; payload: { align: Align; index: number } }
+  | { type: 'TOGGLE_SELECTED_LINE'; payload: { align: Align; index: number; multi?: boolean } }
+  | { type: 'CLEAR_SELECTED_LINES' }
+  | { type: 'SELECT_ALL_LINES' }
+  | { type: 'SELECT_ONLY_AXIS_LINES'; payload: { align: Align } }
+  | { type: 'SET_GUIDES_VISIBLE'; payload: { visible: boolean } }
+  | { type: 'SET_GUIDE_COLOR'; payload: { color: string } }
+  | { type: 'SET_GUIDE_COLORS'; payload: { h?: string; v?: string; selected?: string } }
+  | { type: 'SET_CANVAS_SIZE'; payload: { width: number; height: number } }
+  | { type: 'REMOVE_SELECTED_LINE' }
+  | { type: 'REMOVE_SELECTED_LINES' }
+  | { type: 'SET_SNAP'; payload: { enabled?: boolean; px?: number } }
+  | { type: 'SET_GUIDE_STYLE'; payload: { hAlpha?: number; vAlpha?: number; hSize?: number; vSize?: number; selectedAlpha?: number } };
 
 export const EditorContext = createContext(
   {} as {
@@ -58,6 +71,20 @@ export interface EditorState {
   };
   exporting: boolean;
   active: boolean;
+  selected: { horizontal: number[]; vertical: number[] };
+  guidesVisible: boolean;
+  guideColor: string; // default/fallback color
+  guideColorH: string;
+  guideColorV: string;
+  selectedGuideColor: string;
+  selectedGuideAlpha: number;
+  guideAlphaH: number;
+  guideAlphaV: number;
+  guideThicknessH: number; // px
+  guideThicknessV: number; // px
+  canvasSize: { width: number; height: number };
+  snapEnabled: boolean;
+  snapPx: number;
 }
 
 // Constants
@@ -75,6 +102,20 @@ const initialState: EditorState = {
   },
   exporting: false,
   active: false,
+  selected: { horizontal: [], vertical: [] },
+  guidesVisible: true,
+  guideColor: '#000000',
+  guideColorH: '#000000',
+  guideColorV: '#000000',
+  selectedGuideColor: '#fbbf24',
+  selectedGuideAlpha: 1,
+  guideAlphaH: 1,
+  guideAlphaV: 1,
+  guideThicknessH: 2,
+  guideThicknessV: 2,
+  canvasSize: { width: 0, height: 0 },
+  snapEnabled: false,
+  snapPx: 10,
 };
 
 // Actions
@@ -221,7 +262,7 @@ const reducerHelper = (state: EditorState, action: Action) => {
             ) {
               return {
                 ...line,
-                position: action.payload.position,
+                position: Math.max(0, Math.min(100, action.payload.position)),
               };
             }
             return line;
@@ -234,7 +275,7 @@ const reducerHelper = (state: EditorState, action: Action) => {
           ) {
             return {
               ...line,
-              position: action.payload.position,
+              position: Math.max(0, Math.min(100, action.payload.position)),
             };
           }
           return line;
@@ -334,6 +375,133 @@ const reducerHelper = (state: EditorState, action: Action) => {
         ...state,
         active: false,
       };
+    case 'SET_SELECTED_LINE':
+      return {
+        ...state,
+        selected: action.payload.align === 'horizontal'
+          ? { horizontal: [action.payload.index], vertical: [] }
+          : { horizontal: [], vertical: [action.payload.index] },
+      };
+    case 'TOGGLE_SELECTED_LINE': {
+      const { align, index, multi } = action.payload;
+      if (!multi) {
+        return align === 'horizontal'
+          ? { ...state, selected: { horizontal: [index], vertical: [] } }
+          : { ...state, selected: { horizontal: [], vertical: [index] } };
+      }
+      if (align === 'horizontal') {
+        const set = new Set(state.selected.horizontal);
+        if (set.has(index)) set.delete(index);
+        else set.add(index);
+        return { ...state, selected: { horizontal: Array.from(set).sort((a, b) => a - b), vertical: state.selected.vertical } };
+      } else {
+        const set = new Set(state.selected.vertical);
+        if (set.has(index)) set.delete(index);
+        else set.add(index);
+        return { ...state, selected: { horizontal: state.selected.horizontal, vertical: Array.from(set).sort((a, b) => a - b) } };
+      }
+    }
+    case 'CLEAR_SELECTED_LINES':
+      return {
+        ...state,
+        selected: { horizontal: [], vertical: [] },
+      };
+    case 'SELECT_ALL_LINES': {
+      const allH = state.horizontalSplit.map((_, i) => i);
+      const allV = state.verticalSplit.map((_, i) => i);
+      return { ...state, selected: { horizontal: allH, vertical: allV } };
+    }
+    case 'SELECT_ONLY_AXIS_LINES': {
+      if (action.payload.align === 'horizontal') {
+        const allH = state.horizontalSplit.map((_, i) => i);
+        return { ...state, selected: { horizontal: allH, vertical: [] } };
+      }
+      const allV = state.verticalSplit.map((_, i) => i);
+      return { ...state, selected: { horizontal: [], vertical: allV } };
+    }
+    case 'SET_GUIDES_VISIBLE':
+      return {
+        ...state,
+        guidesVisible: action.payload.visible,
+      };
+    case 'SET_GUIDE_COLOR':
+      return {
+        ...state,
+        guideColor: action.payload.color,
+      };
+    case 'SET_GUIDE_COLORS':
+      return {
+        ...state,
+        guideColorH: action.payload.h ?? state.guideColorH,
+        guideColorV: action.payload.v ?? state.guideColorV,
+        selectedGuideColor: action.payload.selected ?? state.selectedGuideColor,
+      };
+    case 'SET_CANVAS_SIZE':
+      return {
+        ...state,
+        canvasSize: {
+          width: Math.max(0, Math.floor(action.payload.width || 0)),
+          height: Math.max(0, Math.floor(action.payload.height || 0)),
+        },
+      };
+    case 'REMOVE_SELECTED_LINE':
+      if (state.selected.horizontal.length) {
+        const toRemove = new Set(state.selected.horizontal);
+        return {
+          ...state,
+          horizontalSplit: state.horizontalSplit.filter((_, i) => !toRemove.has(i)),
+          selected: { horizontal: [], vertical: [] },
+        };
+      }
+      if (state.selected.vertical.length) {
+        const toRemove = new Set(state.selected.vertical);
+        return {
+          ...state,
+          verticalSplit: state.verticalSplit.filter((_, i) => !toRemove.has(i)),
+          selected: { horizontal: [], vertical: [] },
+        };
+      }
+      return state;
+    case 'REMOVE_SELECTED_LINES': {
+      const remH = new Set(state.selected.horizontal);
+      const remV = new Set(state.selected.vertical);
+      return {
+        ...state,
+        horizontalSplit: state.horizontalSplit.filter((_, i) => !remH.has(i)),
+        verticalSplit: state.verticalSplit.filter((_, i) => !remV.has(i)),
+        selected: { horizontal: [], vertical: [] },
+      };
+    }
+    case 'SET_SNAP':
+      return {
+        ...state,
+        snapEnabled: action.payload.enabled ?? state.snapEnabled,
+        snapPx: action.payload.px ?? state.snapPx,
+      };
+    case 'SET_GUIDE_STYLE':
+      return {
+        ...state,
+        guideAlphaH:
+          action.payload.hAlpha != null
+            ? Math.max(0, Math.min(1, action.payload.hAlpha))
+            : state.guideAlphaH,
+        guideAlphaV:
+          action.payload.vAlpha != null
+            ? Math.max(0, Math.min(1, action.payload.vAlpha))
+            : state.guideAlphaV,
+        selectedGuideAlpha:
+          action.payload.selectedAlpha != null
+            ? Math.max(0, Math.min(1, action.payload.selectedAlpha))
+            : state.selectedGuideAlpha,
+        guideThicknessH:
+          action.payload.hSize != null
+            ? Math.max(1, Math.round(action.payload.hSize))
+            : state.guideThicknessH,
+        guideThicknessV:
+          action.payload.vSize != null
+            ? Math.max(1, Math.round(action.payload.vSize))
+            : state.guideThicknessV,
+      };
     default:
       return state;
   }
@@ -345,6 +513,19 @@ const HISTORY_AGNOSTIC_ACTIONS = [
   'REDO',
   'PUSH_HISTORY',
   'EXPORT',
+  'SET_SELECTED_LINE',
+  'TOGGLE_SELECTED_LINE',
+  'CLEAR_SELECTED_LINES',
+  'SELECT_ALL_LINES',
+  'SELECT_ONLY_AXIS_LINES',
+  'SET_GUIDES_VISIBLE',
+  'SET_GUIDE_COLOR',
+  'SET_GUIDE_COLORS',
+  'SET_CANVAS_SIZE',
+  'SET_SNAP',
+  'REMOVE_SELECTED_LINE',
+  'REMOVE_SELECTED_LINES',
+  'SET_GUIDE_STYLE',
 ];
 const reducer = (state: EditorState, action: Action) => {
   const newState = reducerHelper(state, action);

@@ -1,16 +1,15 @@
 import React from 'react';
 
 import Boundary from '@/components/Boundary';
-import Button from '@/components/buttons/Button';
 import EditorBatchApplyButton from '@/components/editor/EditorBatchApplyButton';
 import EditorPresets from '@/components/editor/EditorPresets';
+import EditorSelectedGuidePanel from '@/components/editor/EditorSelectedGuidePanel';
 import EditorTools from '@/components/editor/EditorTools';
 import EditorUndoRedo from '@/components/editor/EditorUndoRedo';
 
-import { MAX_SPLITS, useEditor } from '@/store/editor';
+// no store usage here; individual components consume the store as needed
 
 const EditorButtonCollection = () => {
-  const { state, dispatch } = useEditor();
   return (
     <>
       {/* Editor Tools */}
@@ -18,20 +17,9 @@ const EditorButtonCollection = () => {
         <h2 className='text-xl font-bold'>Editor Tools</h2>
         <Boundary />
       </div>
-      <Button
-        onClick={() =>
-          dispatch({ type: 'SUBDIVIDE_LINES', payload: { count: 1 } })
-        }
-        disabled={
-          state.horizontalSplit.length >= MAX_SPLITS / 2 ||
-          state.verticalSplit.length >= MAX_SPLITS / 2 ||
-          state.exporting ||
-          !state.active
-        }
-      >
-        Subdivide
-      </Button>
-      <EditorTools />
+      <EditorTools /> 
+
+      <EditorSelectedGuidePanel />
 
       {/* Presets */}
       <div className='pt-4'>
@@ -43,7 +31,7 @@ const EditorButtonCollection = () => {
       </div>
 
       {/* History & Export */}
-      <div className='pt-5'>
+      <div className='pt-4'>
         <h2 className='text-xl font-bold'>History & Export</h2>
         <Boundary />
       </div>
