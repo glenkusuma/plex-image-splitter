@@ -8,7 +8,7 @@ const EditorPresets = () => {
   const { state, dispatch } = useEditor();
   const [canRedo, canUndo] = [
     state.history.splits.length > 0 &&
-      state.history.offset < state.history.splits.length - 1,
+    state.history.offset < state.history.splits.length - 1,
     state.history.splits.length > 0 && state.history.offset >= 0,
   ];
   return (
@@ -40,10 +40,24 @@ const EditorPresets = () => {
       <Button
         onClick={() => dispatch({ type: 'EXPORT' })}
         disabled={!state.active || state.exporting}
+        title='Export and download zip'
       >
         <img
           src='/images/svg/Export.svg'
-          alt='Clear'
+          alt='Export'
+          width={20}
+          height={20}
+          style={{ filter: 'invert(1)' }}
+        />
+      </Button>
+      <Button
+        onClick={() => { if (typeof window !== 'undefined' && window.__openExportPreview) window.__openExportPreview(); }}
+        disabled={!state.active || state.exporting}
+        title='Preview slices before exporting'
+      >
+        <img
+          src='/images/svg/Image.svg'
+          alt='Preview'
           width={20}
           height={20}
           style={{ filter: 'invert(1)' }}

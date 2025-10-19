@@ -41,7 +41,11 @@ type Action =
   | { type: 'REMOVE_SELECTED_LINE' }
   | { type: 'REMOVE_SELECTED_LINES' }
   | { type: 'SET_SNAP'; payload: { enabled?: boolean; px?: number } }
-  | { type: 'SET_GUIDE_STYLE'; payload: { hAlpha?: number; vAlpha?: number; hSize?: number; vSize?: number; selectedAlpha?: number } };
+  | { type: 'SET_GUIDE_STYLE'; payload: { hAlpha?: number; vAlpha?: number; hSize?: number; vSize?: number; selectedAlpha?: number } }
+  | { type: 'SET_EXPORT_OPTIONS'; payload: { zipName?: string; filenamePattern?: string; minWidthPx?: number; minHeightPx?: number; dryRun?: boolean } }
+  | { type: 'SET_EXPORT_OPTIONS_FLAGS'; payload: { useZipName?: boolean; useFilenamePattern?: boolean; useFilters?: boolean; useMinWidth?: boolean; useMinHeight?: boolean; useMaxWidth?: boolean; useMaxHeight?: boolean } }
+  | { type: 'SET_EXPORT_MAX'; payload: { maxWidthPx?: number; maxHeightPx?: number } }
+  | { type: 'RESET_EXPORT_OPTIONS' };
 
 export const EditorContext = createContext(
   {} as {
@@ -85,6 +89,22 @@ export interface EditorState {
   canvasSize: { width: number; height: number };
   snapEnabled: boolean;
   snapPx: number;
+  // Export options
+  exportZipName: string; // e.g., export.zip
+  exportFilenamePattern: string; // e.g., image-{i}-split-{index}-{w}x{h}.png
+  exportMinWidthPx: number;
+  exportMinHeightPx: number;
+  exportDryRun: boolean;
+  exportMaxWidthPx: number;
+  exportMaxHeightPx: number;
+  // enable flags
+  exportUseZipName: boolean;
+  exportUseFilenamePattern: boolean;
+  exportUseFilters: boolean;
+  exportUseMinWidth: boolean;
+  exportUseMinHeight: boolean;
+  exportUseMaxWidth: boolean;
+  exportUseMaxHeight: boolean;
 }
 
 // Constants
@@ -116,6 +136,20 @@ const initialState: EditorState = {
   canvasSize: { width: 0, height: 0 },
   snapEnabled: false,
   snapPx: 10,
+  exportZipName: 'export.zip',
+  exportFilenamePattern: 'image-{i}-split-{index}.png',
+  exportMinWidthPx: 1,
+  exportMinHeightPx: 1,
+  exportDryRun: false,
+  exportMaxWidthPx: Number.MAX_SAFE_INTEGER,
+  exportMaxHeightPx: Number.MAX_SAFE_INTEGER,
+  exportUseZipName: true,
+  exportUseFilenamePattern: true,
+  exportUseFilters: false,
+  exportUseMinWidth: false,
+  exportUseMinHeight: false,
+  exportUseMaxWidth: false,
+  exportUseMaxHeight: false,
 };
 
 // Actions
@@ -354,10 +388,16 @@ const reducerHelper = (state: EditorState, action: Action) => {
     case 'EXPORT':
       setTimeout(async () => {
         const file = await exportImages(state, [state.activeSrc]);
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(file);
-        a.download = 'export.zip';
-        a.click();
+        if (!state.exportDryRun) {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(file);
+          a.download = (state.exportUseZipName ? state.exportZipName : 'export.zip') || 'export.zip';
+          a.click();
+        } else {
+          // Dry-run: no download. Could set a preview in state in future.
+          // eslint-disable-next-line no-console
+          console.log('[Dry Run] Export prepared but not downloaded.');
+        }
       }, 0);
       return state;
     case 'SET_EXPORTING_FLAG':
@@ -502,6 +542,49 @@ const reducerHelper = (state: EditorState, action: Action) => {
             ? Math.max(1, Math.round(action.payload.vSize))
             : state.guideThicknessV,
       };
+    case 'SET_EXPORT_OPTIONS':
+      return {
+        ...state,
+        exportZipName: action.payload.zipName ?? state.exportZipName,
+        exportFilenamePattern: action.payload.filenamePattern ?? state.exportFilenamePattern,
+        exportMinWidthPx: action.payload.minWidthPx != null ? Math.max(1, Math.round(action.payload.minWidthPx)) : state.exportMinWidthPx,
+        exportMinHeightPx: action.payload.minHeightPx != null ? Math.max(1, Math.round(action.payload.minHeightPx)) : state.exportMinHeightPx,
+        exportDryRun: action.payload.dryRun ?? state.exportDryRun,
+      };
+    case 'SET_EXPORT_MAX':
+      return {
+        ...state,
+        exportMaxWidthPx: action.payload.maxWidthPx != null ? Math.max(1, Math.round(action.payload.maxWidthPx)) : state.exportMaxWidthPx,
+        exportMaxHeightPx: action.payload.maxHeightPx != null ? Math.max(1, Math.round(action.payload.maxHeightPx)) : state.exportMaxHeightPx,
+      };
+    case 'SET_EXPORT_OPTIONS_FLAGS':
+      return {
+        ...state,
+        exportUseZipName: action.payload.useZipName ?? state.exportUseZipName,
+        exportUseFilenamePattern: action.payload.useFilenamePattern ?? state.exportUseFilenamePattern,
+        exportUseFilters: action.payload.useFilters ?? state.exportUseFilters,
+        exportUseMinWidth: action.payload.useMinWidth ?? state.exportUseMinWidth,
+        exportUseMinHeight: action.payload.useMinHeight ?? state.exportUseMinHeight,
+        exportUseMaxWidth: action.payload.useMaxWidth ?? state.exportUseMaxWidth,
+        exportUseMaxHeight: action.payload.useMaxHeight ?? state.exportUseMaxHeight,
+      };
+    case 'RESET_EXPORT_OPTIONS':
+      return {
+        ...state,
+        exportZipName: 'export.zip',
+        exportFilenamePattern: 'image-{i}-split-{index}.png',
+        exportMinWidthPx: 1,
+        exportMinHeightPx: 1,
+        exportMaxWidthPx: Number.MAX_SAFE_INTEGER,
+        exportMaxHeightPx: Number.MAX_SAFE_INTEGER,
+        exportUseZipName: true,
+        exportUseFilenamePattern: true,
+        exportUseFilters: false,
+        exportUseMinWidth: false,
+        exportUseMinHeight: false,
+        exportUseMaxWidth: false,
+        exportUseMaxHeight: false,
+      };
     default:
       return state;
   }
@@ -526,6 +609,10 @@ const HISTORY_AGNOSTIC_ACTIONS = [
   'REMOVE_SELECTED_LINE',
   'REMOVE_SELECTED_LINES',
   'SET_GUIDE_STYLE',
+  'SET_EXPORT_OPTIONS',
+  'SET_EXPORT_OPTIONS_FLAGS',
+  'SET_EXPORT_MAX',
+  'RESET_EXPORT_OPTIONS',
 ];
 const reducer = (state: EditorState, action: Action) => {
   const newState = reducerHelper(state, action);

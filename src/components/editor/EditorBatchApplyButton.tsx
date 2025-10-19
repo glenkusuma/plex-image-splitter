@@ -36,7 +36,7 @@ const EditorBatchApplyButton = () => {
     const exported = await exportImages(state, imageSrcs);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(exported);
-    a.download = 'export.zip';
+    a.download = (state.exportUseZipName ? state.exportZipName : 'export.zip') || 'export.zip';
     a.click();
 
     dispatch({ type: 'SET_EXPORTING_FLAG', payload: { exporting: false } });

@@ -2,6 +2,8 @@ import React from 'react';
 
 import Boundary from '@/components/Boundary';
 import EditorBatchApplyButton from '@/components/editor/EditorBatchApplyButton';
+import EditorExportOptions from '@/components/editor/EditorExportOptions';
+import EditorExportPreviewModal from '@/components/editor/EditorExportPreviewModal';
 import EditorPresets from '@/components/editor/EditorPresets';
 import EditorSelectedGuidePanel from '@/components/editor/EditorSelectedGuidePanel';
 import EditorTools from '@/components/editor/EditorTools';
@@ -17,7 +19,7 @@ const EditorButtonCollection = () => {
         <h2 className='text-xl font-bold'>Editor Tools</h2>
         <Boundary />
       </div>
-      <EditorTools /> 
+      <EditorTools />
 
       <EditorSelectedGuidePanel />
 
@@ -38,6 +40,8 @@ const EditorButtonCollection = () => {
       <div className='grid grid-cols-3 gap-2'>
         <EditorUndoRedo />
       </div>
+      <EditorExportOptions />
+      <EditorExportPreviewModal />
       <EditorBatchApplyButton />
     </>
   );
