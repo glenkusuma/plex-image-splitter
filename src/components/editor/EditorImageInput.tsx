@@ -11,7 +11,8 @@ const EditorImageInput = () => {
 
   const hiddenInputRef = useRef<HTMLInputElement>(null);
   const dispatchImageFromUser = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file: File | null = e.target.files[0] || null;
+    const files = e.target.files;
+    const file: File | null = files && files.length > 0 ? files[0] : null;
     if (file) {
       const reader = new FileReader();
       reader.onload = (loaded) => {
@@ -53,9 +54,8 @@ const EditorImageInput = () => {
         className='hidden'
         ref={hiddenInputRef}
         onClick={(e) => {
-          if (e.target) {
-            e.target.value = '';
-          }
+          const target = e.target as HTMLInputElement;
+          if (target) target.value = '';
         }}
         onChange={(e) => dispatchImageFromUser(e)}
       />

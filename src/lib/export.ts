@@ -4,7 +4,10 @@ import { EditorState, SplitLine } from '@/store/editor';
 
 import zipMD from '@/constant/zip';
 
-export const exportImages = async (state: EditorState, src: string[]): Blob => {
+export const exportImages = async (
+  state: EditorState,
+  src: string[]
+): Promise<Blob> => {
   // Create a zip file
   const zip = new JSZip();
 

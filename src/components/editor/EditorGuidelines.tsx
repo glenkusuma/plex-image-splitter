@@ -49,20 +49,18 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
       if (dragging) {
         if (dragProps.align === 'horizontal') {
           const delta = e.clientY - startDistance;
-          const { height } = viewRef.current?.getBoundingClientRect() || {
-            left: 0,
-            width: 0,
-          };
+          const { height } =
+            viewRef.current?.getBoundingClientRect() ||
+            ({ left: 0, top: 0, width: 0, height: 0 } as DOMRect);
           const deltaPercentage = (delta / height) * 100;
           dragProps.linePositionSetter(
             dragProps.linePosition + deltaPercentage
           );
         } else if (dragProps.align === 'vertical') {
           const delta = e.clientX - startDistance;
-          const { width } = viewRef.current?.getBoundingClientRect() || {
-            left: 0,
-            width: 0,
-          };
+          const { width } =
+            viewRef.current?.getBoundingClientRect() ||
+            ({ left: 0, top: 0, width: 0, height: 0 } as DOMRect);
           const deltaPercentage = (delta / width) * 100;
           dragProps.linePositionSetter(
             dragProps.linePosition + deltaPercentage
