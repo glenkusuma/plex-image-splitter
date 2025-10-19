@@ -2,6 +2,7 @@ import React from 'react';
 
 import Boundary from '@/components/Boundary';
 import EditorBatchApplyButton from '@/components/editor/EditorBatchApplyButton';
+import EditorCustomPresets from '@/components/editor/EditorCustomPresets';
 import EditorExportOptions from '@/components/editor/EditorExportOptions';
 import EditorExportPreviewModal from '@/components/editor/EditorExportPreviewModal';
 import EditorPresets from '@/components/editor/EditorPresets';
@@ -31,6 +32,7 @@ const EditorButtonCollection = () => {
       <div className='grid grid-cols-3 gap-2'>
         <EditorPresets />
       </div>
+      <EditorCustomPresets />
 
       {/* History & Export */}
       <div className='pt-4'>
