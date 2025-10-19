@@ -1,12 +1,12 @@
 import * as React from 'react';
 
 import EditorCanvas from '@/components/editor/EditorCanvas';
+import EditorExporting from '@/components/editor/EditorExporting';
 import EditorSidebar from '@/components/editor/EditorSidebar';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 
 import { EditorProvider } from '@/store/editor';
-import EditorExporting from '@/components/editor/EditorExporting';
 
 export default function HomePage() {
   return (

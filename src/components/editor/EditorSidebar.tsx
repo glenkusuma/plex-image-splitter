@@ -1,4 +1,3 @@
-import Boundary from '@/components/Boundary';
 import EditorButtonCollection from '@/components/editor/EditorButtonCollection';
 import EditorImageInput from '@/components/editor/EditorImageInput';
 import UnderlineLink from '@/components/links/UnderlineLink';
@@ -6,7 +5,7 @@ import UnderlineLink from '@/components/links/UnderlineLink';
 const EditorSidebar = () => {
   return (
     <div className='flex h-screen w-full flex-col justify-center gap-9 overflow-y-auto bg-gray-900 px-4 text-white'>
-      <div className='flex h-screen flex-col justify-center gap-2 overflow-y-scroll scrollbar-hide'>
+      <div className='scrollbar-hide flex h-screen flex-col justify-center gap-2 overflow-y-scroll'>
         <img
           src='/images/svg/Logo.svg'
           alt='logo'

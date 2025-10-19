@@ -15,7 +15,14 @@ const EditorPresets = () => {
     if (hCount + state.horizontalSplit.length > MAX_SPLITS) return true;
     if (vCount + state.verticalSplit.length > MAX_SPLITS) return true;
     return false;
-  }, [hCount, vCount, state.active, state.exporting, state.horizontalSplit.length, state.verticalSplit.length]);
+  }, [
+    hCount,
+    vCount,
+    state.active,
+    state.exporting,
+    state.horizontalSplit.length,
+    state.verticalSplit.length,
+  ]);
 
   const onGenerate = () => {
     // We want to generate hCount horizontal subdivisions and vCount vertical subdivisions
@@ -35,7 +42,11 @@ const EditorPresets = () => {
               payload: { count: 1 },
             })
           }
-          disabled={state.horizontalSplit.length >= MAX_SPLITS / 2 || !state.active || state.exporting}
+          disabled={
+            state.horizontalSplit.length >= MAX_SPLITS / 2 ||
+            !state.active ||
+            state.exporting
+          }
         >
           H-Split
         </Button>
@@ -46,7 +57,11 @@ const EditorPresets = () => {
               payload: { count: 1 },
             })
           }
-          disabled={state.verticalSplit.length >= MAX_SPLITS / 2 || !state.active || state.exporting}
+          disabled={
+            state.verticalSplit.length >= MAX_SPLITS / 2 ||
+            !state.active ||
+            state.exporting
+          }
         >
           V-Split
         </Button>
@@ -54,7 +69,11 @@ const EditorPresets = () => {
           onClick={() =>
             dispatch({ type: 'ADD_NEW_HLINE', payload: { count: 1 } })
           }
-          disabled={state.horizontalSplit.length >= MAX_SPLITS || !state.active || state.exporting}
+          disabled={
+            state.horizontalSplit.length >= MAX_SPLITS ||
+            !state.active ||
+            state.exporting
+          }
         >
           <img
             src='/images/svg/Plus.svg'
@@ -70,7 +89,11 @@ const EditorPresets = () => {
           onClick={() =>
             dispatch({ type: 'ADD_NEW_VLINE', payload: { count: 1 } })
           }
-          disabled={state.verticalSplit.length >= MAX_SPLITS || !state.active || state.exporting}
+          disabled={
+            state.verticalSplit.length >= MAX_SPLITS ||
+            !state.active ||
+            state.exporting
+          }
         >
           <img
             src='/images/svg/Plus.svg'
@@ -84,7 +107,11 @@ const EditorPresets = () => {
         </Button>
         <Button
           onClick={() => dispatch({ type: 'REMOVE_HLINE' })}
-          disabled={state.horizontalSplit.length <= 0 || !state.active || state.exporting}
+          disabled={
+            state.horizontalSplit.length <= 0 ||
+            !state.active ||
+            state.exporting
+          }
         >
           <img
             src='/images/svg/Minus.svg'
@@ -98,7 +125,9 @@ const EditorPresets = () => {
         </Button>
         <Button
           onClick={() => dispatch({ type: 'REMOVE_VLINE' })}
-          disabled={state.verticalSplit.length <= 0 || !state.active || state.exporting}
+          disabled={
+            state.verticalSplit.length <= 0 || !state.active || state.exporting
+          }
         >
           <img
             src='/images/svg/Minus.svg'
@@ -120,7 +149,9 @@ const EditorPresets = () => {
             type='number'
             min={0}
             value={hCount}
-            onChange={(e) => setHCount(Math.max(0, Number(e.target.value || 0)))}
+            onChange={(e) =>
+              setHCount(Math.max(0, Number(e.target.value || 0)))
+            }
             className='w-16 rounded bg-gray-800 px-2 py-1 text-white'
             aria-label='Horizontal count'
           />
@@ -128,7 +159,9 @@ const EditorPresets = () => {
             type='number'
             min={0}
             value={vCount}
-            onChange={(e) => setVCount(Math.max(0, Number(e.target.value || 0)))}
+            onChange={(e) =>
+              setVCount(Math.max(0, Number(e.target.value || 0)))
+            }
             className='w-16 rounded bg-gray-800 px-2 py-1 text-white'
             aria-label='Vertical count'
           />
@@ -136,7 +169,9 @@ const EditorPresets = () => {
             Generate
           </Button>
         </div>
-        <p className='text-xs text-gray-400 pt-1'>H / V — number of slices to insert (evenly distributed)</p>
+        <p className='pt-1 text-xs text-gray-400'>
+          H / V — number of slices to insert (evenly distributed)
+        </p>
       </div>
     </>
   );

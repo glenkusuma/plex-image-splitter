@@ -13,18 +13,24 @@ const EditorButtonCollection = () => {
   const { state, dispatch } = useEditor();
   return (
     <>
-     {/* Editor Tools */}
+      {/* Editor Tools */}
       <div className='pt-4'>
         <h2 className='text-xl font-bold'>Editor Tools</h2>
         <Boundary />
       </div>
       <Button
-        onClick={() => dispatch({ type: 'SUBDIVIDE_LINES', payload: { count: 1 } }) }
+        onClick={() =>
+          dispatch({ type: 'SUBDIVIDE_LINES', payload: { count: 1 } })
+        }
         disabled={
           state.horizontalSplit.length >= MAX_SPLITS / 2 ||
           state.verticalSplit.length >= MAX_SPLITS / 2 ||
-          state.exporting || !state.active
-        }>Subdivide</Button>
+          state.exporting ||
+          !state.active
+        }
+      >
+        Subdivide
+      </Button>
       <EditorTools />
 
       {/* Presets */}

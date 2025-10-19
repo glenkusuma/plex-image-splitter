@@ -38,14 +38,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const disabled = isLoading || buttonDisabled;
-    const [isHovered, setIsHovered] = React.useState(false);
     return (
       <button
         ref={ref}
         type='button'
         disabled={disabled}
         className={clsxm(
-          'flex inline-flex items-center items-center justify-center rounded font-medium',
+          'inline-flex items-center justify-center rounded font-medium',
           'focus-visible:ring-primary-500 focus:outline-none focus-visible:ring',
           'shadow-sm',
           'transition-colors duration-75',

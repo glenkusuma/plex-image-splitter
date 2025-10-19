@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { useEditor } from '@/store/editor';
 
@@ -6,9 +6,11 @@ const EditorImage = ({ setFill }: { setFill: CallableFunction }) => {
   const { state, dispatch } = useEditor();
   const imageRef = useRef<HTMLImageElement | null>(null);
   const setHasImage = (hasImage: boolean) => {
-    dispatch({ type: hasImage ? 'SET_EDITOR_ACTIVE' : 'SET_EDITOR_INACTIVE', payload: { active: true } });
+    dispatch({
+      type: hasImage ? 'SET_EDITOR_ACTIVE' : 'SET_EDITOR_INACTIVE',
+    });
   };
-  const adjustFillOnChanges = () => {
+  const adjustFillOnChanges = useCallback(() => {
     if (!(imageRef && imageRef.current)) return;
     const container: [number, number] = [
       imageRef.current.clientWidth,
@@ -24,14 +26,14 @@ const EditorImage = ({ setFill }: { setFill: CallableFunction }) => {
       return;
     }
     setFill([1, ((1 / aspectRatio(natural)) * container[0]) / container[1]]);
-  };
+  }, [setFill]);
   useEffect(() => {
     adjustFillOnChanges();
     window.addEventListener('resize', adjustFillOnChanges);
     return () => {
       window.removeEventListener('resize', adjustFillOnChanges);
     };
-  }, []);
+  }, [adjustFillOnChanges]);
 
   const handleLoad = () => {
     setHasImage(true);
@@ -45,7 +47,9 @@ const EditorImage = ({ setFill }: { setFill: CallableFunction }) => {
       ref={imageRef}
       onLoad={handleLoad}
       onError={() => setHasImage(false)}
-      className={`${state.active ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}
+      className={`${
+        state.active ? 'opacity-100' : 'opacity-0'
+      } transition-opacity duration-500`}
       style={{
         transform: `scale(1)`,
         position: 'absolute',

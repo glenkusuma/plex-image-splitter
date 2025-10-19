@@ -13,7 +13,10 @@ const EditorPresets = () => {
   ];
   return (
     <>
-      <Button onClick={() => dispatch({ type: 'UNDO' })} disabled={!canUndo || !state.active || state.exporting}>
+      <Button
+        onClick={() => dispatch({ type: 'UNDO' })}
+        disabled={!canUndo || !state.active || state.exporting}
+      >
         <img
           src='/images/svg/Undo.svg'
           alt='Clear'
@@ -22,7 +25,10 @@ const EditorPresets = () => {
           style={{ filter: 'invert(1)' }}
         />
       </Button>
-      <Button onClick={() => dispatch({ type: 'REDO' })} disabled={!canRedo || !state.active || state.exporting}>
+      <Button
+        onClick={() => dispatch({ type: 'REDO' })}
+        disabled={!canRedo || !state.active || state.exporting}
+      >
         <img
           src='/images/svg/Redo.svg'
           alt='Clear'
@@ -31,7 +37,10 @@ const EditorPresets = () => {
           style={{ filter: 'invert(1)' }}
         />
       </Button>
-      <Button onClick={() => dispatch({ type: 'EXPORT' })} disabled={!state.active || state.exporting}>
+      <Button
+        onClick={() => dispatch({ type: 'EXPORT' })}
+        disabled={!state.active || state.exporting}
+      >
         <img
           src='/images/svg/Export.svg'
           alt='Clear'

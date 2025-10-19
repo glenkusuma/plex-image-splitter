@@ -10,12 +10,16 @@ const EditorPresets = () => {
     <>
       <Button
         disabled={state.exporting || !state.active}
-        onClick={() => dispatch({ type: 'CLEAR_LINES', payload: {} })}>
+        onClick={() => dispatch({ type: 'CLEAR_LINES' })}
+      >
         <img src='/images/svg/Clear.svg' alt='Clear' width={28} height={28} />
       </Button>
       <Button
         disabled={state.exporting || !state.active}
-        onClick={() => dispatch({ type: 'SUBDIVIDE_LINES_ITR', payload: { itr: 1 } }) } >
+        onClick={() =>
+          dispatch({ type: 'SUBDIVIDE_LINES_ITR', payload: { itr: 1 } })
+        }
+      >
         <img
           src='/images/svg/2x2.svg'
           alt='Preset Square 2x2'
@@ -54,7 +58,6 @@ const EditorPresets = () => {
         onClick={() =>
           dispatch({
             type: 'SPLIT_INTO_TWO_HORIZONTAL_COMPONENTS',
-            payload: {},
           })
         }
       >
@@ -67,9 +70,7 @@ const EditorPresets = () => {
       </Button>
       <Button
         disabled={state.exporting || !state.active}
-        onClick={() =>
-          dispatch({ type: 'SPLIT_INTO_TWO_VERTICAL_COMPONENTS', payload: {} })
-        }
+        onClick={() => dispatch({ type: 'SPLIT_INTO_TWO_VERTICAL_COMPONENTS' })}
       >
         <img
           src='/images/svg/Vertical.svg'

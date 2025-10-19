@@ -12,7 +12,7 @@ const EditorBatchApplyButton = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const imageSrcs: string[] = [];
     if (e.target.files) {
-      dispatch({ type: 'SET_EXPORTING_FLAG', payload: { exporting: true } })
+      dispatch({ type: 'SET_EXPORTING_FLAG', payload: { exporting: true } });
       const files = Array.from(e.target.files);
       files.forEach((file) => {
         const reader = new FileReader();
@@ -39,7 +39,7 @@ const EditorBatchApplyButton = () => {
     a.download = 'export.zip';
     a.click();
 
-    dispatch({ type: 'SET_EXPORTING_FLAG', payload: { exporting: false } })
+    dispatch({ type: 'SET_EXPORTING_FLAG', payload: { exporting: false } });
   };
 
   return (
@@ -54,8 +54,10 @@ const EditorBatchApplyButton = () => {
       />
       <Button
         disabled={state.exporting || !state.active}
-        onClick={() => inputRef.current?.click()}>Batch Apply</Button>
-
+        onClick={() => inputRef.current?.click()}
+      >
+        Batch Apply
+      </Button>
     </>
   );
 };
