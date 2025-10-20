@@ -6,7 +6,9 @@ export interface NamedPreset {
   id: string;
   name: string;
   data: PresetData;
+  order: number;
   createdAt: number;
+  updatedAt: number;
 }
 
 export type PendingAction =
