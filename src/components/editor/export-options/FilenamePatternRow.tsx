@@ -24,9 +24,14 @@ const FilenamePatternRow: React.FC = () => {
         placeholder='image-{i}-split-{index}.png'
         title='Use placeholders: {i} (source index), {index} (slice index), {w} (width), {h} (height)'
       />
-      <label className='col-span-1 inline-flex items-center gap-1 text-xs text-gray-300'>
+      <label
+        className='col-span-1 inline-flex items-center gap-1 text-xs text-gray-300'
+        htmlFor='useFilenamePattern'
+      >
         <input
           type='checkbox'
+          id='useFilenamePattern'
+          name='useFilenamePattern'
           checked={state.exportUseFilenamePattern}
           onChange={(e) =>
             dispatch({

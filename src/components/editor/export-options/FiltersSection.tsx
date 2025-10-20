@@ -7,10 +7,15 @@ const FiltersSection: React.FC = () => {
   return (
     <div className='rounded-md border border-gray-700 p-2'>
       <div className='mb-2 flex items-center gap-2'>
-        <label className='text-sm'>Filters</label>
-        <label className='ml-auto inline-flex items-center gap-1 text-xs text-gray-300'>
+        <span className='text-sm'>Filters</span>
+        <label
+          className='ml-auto inline-flex items-center gap-1 text-xs text-gray-300'
+          htmlFor='useFilters'
+        >
           <input
             type='checkbox'
+            id='useFilters'
+            name='useFilters'
             checked={state.exportUseFilters}
             onChange={(e) =>
               dispatch({
@@ -43,9 +48,14 @@ const FiltersSection: React.FC = () => {
           }
           title='Exclude slices narrower than this width (px)'
         />
-        <label className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'>
+        <label
+          className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'
+          htmlFor='useMinWidth'
+        >
           <input
             type='checkbox'
+            id='useMinWidth'
+            name='useMinWidth'
             checked={state.exportUseMinWidth}
             onChange={(e) =>
               dispatch({
@@ -78,9 +88,14 @@ const FiltersSection: React.FC = () => {
           }
           title='Exclude slices shorter than this height (px)'
         />
-        <label className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'>
+        <label
+          className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'
+          htmlFor='useMinHeight'
+        >
           <input
             type='checkbox'
+            id='useMinHeight'
+            name='useMinHeight'
             checked={state.exportUseMinHeight}
             onChange={(e) =>
               dispatch({
@@ -117,9 +132,14 @@ const FiltersSection: React.FC = () => {
           }
           title='Exclude slices wider than this width (px)'
         />
-        <label className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'>
+        <label
+          className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'
+          htmlFor='useMaxWidth'
+        >
           <input
             type='checkbox'
+            id='useMaxWidth'
+            name='useMaxWidth'
             checked={state.exportUseMaxWidth}
             onChange={(e) =>
               dispatch({
@@ -156,9 +176,14 @@ const FiltersSection: React.FC = () => {
           }
           title='Exclude slices taller than this height (px)'
         />
-        <label className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'>
+        <label
+          className='col-span-3 inline-flex items-center gap-1 text-xs text-gray-300'
+          htmlFor='useMaxHeight'
+        >
           <input
             type='checkbox'
+            id='useMaxHeight'
+            name='useMaxHeight'
             checked={state.exportUseMaxHeight}
             onChange={(e) =>
               dispatch({

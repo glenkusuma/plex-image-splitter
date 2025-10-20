@@ -27,6 +27,8 @@ const ZipNameRow: React.FC = () => {
       <label className='col-span-1 inline-flex items-center gap-1 text-xs text-gray-300'>
         <input
           type='checkbox'
+          id='useZipName'
+          name='useZipName'
           checked={state.exportUseZipName}
           onChange={(e) =>
             dispatch({
