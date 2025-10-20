@@ -75,7 +75,7 @@ const PresetGrid: React.FC<Props> = ({
           {sortKey === 'createdAt' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
         </Button>
       </div>
-      <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+      <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'>
         {presets.map((p) => (
           <div key={p.id} className='rounded border border-gray-700 p-2'>
             <div className='mb-2 text-sm font-medium'>{p.name}</div>
@@ -99,7 +99,13 @@ const PresetGrid: React.FC<Props> = ({
                 disabled={exporting}
                 title='Apply this preset'
               >
-                Apply
+                <img
+                  src='/images/svg/Apply.svg'
+                  alt='Apply preset'
+                  width={20}
+                  height={20}
+                  style={{ filter: 'invert(1)' }}
+                />
               </Button>
               <Button
                 size='sm'
@@ -107,7 +113,13 @@ const PresetGrid: React.FC<Props> = ({
                 disabled={!active || exporting}
                 title='Overwrite with current state'
               >
-                Overwrite
+                <img
+                  src='/images/svg/Overwrite.svg'
+                  alt='Overwrite preset'
+                  width={20}
+                  height={20}
+                  style={{ filter: 'invert(1)' }}
+                />
               </Button>
               <Button
                 size='sm'
@@ -115,7 +127,13 @@ const PresetGrid: React.FC<Props> = ({
                 disabled={!active || exporting}
                 title='Rename preset'
               >
-                Rename
+                <img
+                  src='/images/svg/Rename.svg'
+                  alt='Rename preset'
+                  width={20}
+                  height={20}
+                  style={{ filter: 'invert(1)' }}
+                />
               </Button>
               <Button
                 size='sm'
@@ -123,7 +141,13 @@ const PresetGrid: React.FC<Props> = ({
                 title='Delete preset'
                 className='rounded border border-red-500 text-red-300 hover:bg-red-500'
               >
-                Delete
+                <img
+                  src='/images/svg/Delete.svg'
+                  alt='Delete preset'
+                  width={20}
+                  height={20}
+                  style={{ filter: 'invert(1)' }}
+                />
               </Button>
             </div>
           </div>

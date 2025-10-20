@@ -32,11 +32,33 @@ const Header: React.FC<Props> = ({
         size='sm'
         onClick={onToggleFullscreen}
         title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
       >
-        {fullscreen ? 'Windowed' : 'Fullscreen'}
+        <img
+          src={
+            fullscreen
+              ? '/images/svg/Minimize.svg'
+              : '/images/svg/Fullscreen.svg'
+          }
+          alt={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          width={20}
+          height={20}
+          style={{ filter: 'invert(1)' }}
+        />
       </Button>
-      <Button size='sm' onClick={onClose} title='Close preview'>
-        Close
+      <Button
+        size='sm'
+        onClick={onClose}
+        title='Close preview'
+        aria-label='Close preview'
+      >
+        <img
+          src='/images/svg/Close.svg'
+          alt='Close preview'
+          width={20}
+          height={20}
+          style={{ filter: 'invert(1)' }}
+        />
       </Button>
     </div>
   );

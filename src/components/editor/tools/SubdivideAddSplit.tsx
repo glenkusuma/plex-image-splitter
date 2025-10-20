@@ -24,6 +24,14 @@ const SubdivideAddSplit: React.FC = () => {
           }
           className='w-full'
         >
+          <img
+            src='/images/svg/Subdivide.svg'
+            alt='Subdivide'
+            width={16}
+            height={16}
+            style={{ filter: 'invert(1)' }}
+            className='mr-2'
+          />
           Subdivide
         </Button>
       </div>
@@ -45,6 +53,14 @@ const SubdivideAddSplit: React.FC = () => {
           }
           className='w-full'
         >
+          <img
+            src='/images/svg/Split-H.svg'
+            alt='Horizontal Split'
+            width={16}
+            height={16}
+            style={{ filter: 'invert(1)' }}
+            className='mr-2'
+          />
           H Split
         </Button>
         <Button
@@ -63,6 +79,14 @@ const SubdivideAddSplit: React.FC = () => {
           }
           className='w-full'
         >
+          <img
+            src='/images/svg/Split-V.svg'
+            alt='Vertical Split'
+            width={16}
+            height={16}
+            style={{ filter: 'invert(1)' }}
+            className='mr-2'
+          />
           V Split
         </Button>
       </div>

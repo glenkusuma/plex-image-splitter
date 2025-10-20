@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Button from '@/components/buttons/Button';
 
@@ -37,6 +37,15 @@ const CustomPresets: React.FC = () => {
     renameState,
   } = useCustomPresets();
 
+  useEffect(() => {
+    if (!openModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenModal(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [openModal, setOpenModal]);
+
   return (
     <div className='mt-2'>
       <div className='rounded-md border border-gray-700 p-2'>
@@ -70,7 +79,7 @@ const CustomPresets: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'
+            className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm'
           >
             <motion.div
               initial={{ y: 24, opacity: 0, scale: 0.98 }}
@@ -78,7 +87,7 @@ const CustomPresets: React.FC = () => {
               exit={{ y: 24, opacity: 0, scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 260, damping: 22 }}
               className={[
-                'flex flex-col overflow-hidden rounded-md bg-gray-900 p-4 text-white shadow-xl',
+                'flex flex-col overflow-hidden rounded-lg border border-blue-500/20 bg-gray-900 p-4 text-white shadow-2xl ring ring-blue-500/20',
                 fullscreen
                   ? 'fixed inset-0 m-0 h-screen w-screen max-w-none rounded-none'
                   : 'max-h-[85vh] w-[95vw] sm:max-w-3xl md:max-w-5xl xl:max-w-7xl',

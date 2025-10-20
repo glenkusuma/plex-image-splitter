@@ -48,9 +48,16 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
           size='sm'
           onClick={onRegenerate}
           title='Re-generate previews from current splits/options'
+          aria-label='Regenerate previews'
           disabled={loading}
         >
-          Regenerate
+          <img
+            src='/images/svg/Regenerate.svg'
+            alt='Regenerate previews'
+            width={20}
+            height={20}
+            style={{ filter: 'invert(1)' }}
+          />
         </Button>
       </div>
       <div className='flex items-center gap-2'>
@@ -58,9 +65,16 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
           size='sm'
           onClick={() => !loading && setShowFilters(!showFilters)}
           title={showFilters ? 'Hide filters' : 'Show filters'}
+          aria-label={showFilters ? 'Hide filters' : 'Show filters'}
           disabled={loading}
         >
-          {showFilters ? 'Hide filters' : 'Show filters'}
+          <img
+            src='/images/svg/Filter.svg'
+            alt={showFilters ? 'Hide filters' : 'Show filters'}
+            width={20}
+            height={20}
+            style={{ filter: 'invert(1)' }}
+          />
         </Button>
         <Button
           size='sm'
@@ -70,17 +84,39 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
               ? 'Hide preview export options'
               : 'Show preview export options'
           }
+          aria-label={
+            showOptions
+              ? 'Hide preview export options'
+              : 'Show preview export options'
+          }
           disabled={loading}
         >
-          {showOptions ? 'Hide options' : 'Show options'}
+          <img
+            src='/images/svg/Options.svg'
+            alt={
+              showOptions
+                ? 'Hide preview export options'
+                : 'Show preview export options'
+            }
+            width={20}
+            height={20}
+            style={{ filter: 'invert(1)' }}
+          />
         </Button>
         <Button
           size='sm'
           onClick={onMatchFromExportOptions}
           title='Match Preview filters to current Export Options'
+          aria-label='Match Preview filters to current Export Options'
           disabled={loading}
         >
-          Match from Export Options
+          <img
+            src='/images/svg/Match.svg'
+            alt='Match Preview filters to current Export Options'
+            width={20}
+            height={20}
+            style={{ filter: 'invert(1)' }}
+          />
         </Button>
       </div>
     </div>

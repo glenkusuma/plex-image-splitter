@@ -59,7 +59,7 @@ const EditorPresets = () => {
         title='Preview slices before exporting'
       >
         <img
-          src='/images/svg/Image.svg'
+          src='/images/svg/Preview.svg'
           alt='Preview'
           width={20}
           height={20}

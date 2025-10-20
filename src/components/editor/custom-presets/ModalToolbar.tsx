@@ -54,11 +54,28 @@ const ModalToolbar: React.FC<Props> = ({
           size='sm'
           onClick={() => setFullscreen(!fullscreen)}
           title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         >
-          {fullscreen ? 'Windowed' : 'Fullscreen'}
+          <img
+            src={
+              fullscreen
+                ? '/images/svg/Minimize.svg'
+                : '/images/svg/Fullscreen.svg'
+            }
+            alt={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            width={20}
+            height={20}
+            style={{ filter: 'invert(1)' }}
+          />
         </Button>
-        <Button size='sm' onClick={onClose}>
-          Close
+        <Button size='sm' onClick={onClose} title='Close' aria-label='Close'>
+          <img
+            src='/images/svg/Close.svg'
+            alt='Close'
+            width={20}
+            height={20}
+            style={{ filter: 'invert(1)' }}
+          />
         </Button>
       </div>
     </div>

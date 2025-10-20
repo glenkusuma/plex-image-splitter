@@ -65,18 +65,23 @@ const EditorExportPreviewModal: React.FC = () => {
 
   useEffect(() => {
     window.__openExportPreview = openPreview;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
     return () => {
       if (window.__openExportPreview) delete window.__openExportPreview;
+      document.removeEventListener('keydown', onKey);
     };
-  }, [openPreview]);
+  }, [openPreview, setOpen]);
 
   if (!open) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm'>
       <div
         className={[
-          'flex flex-col overflow-hidden rounded-md bg-gray-900 p-4 text-white shadow-xl',
+          'flex flex-col overflow-hidden rounded-lg border border-blue-500/20 bg-gray-900 p-4 text-white shadow-2xl ring ring-blue-500/20',
           fullscreen
             ? 'fixed inset-0 m-0 h-screen w-screen max-w-none rounded-none'
             : 'max-h-[85vh] w-[95vw] sm:max-w-3xl md:max-w-5xl xl:max-w-7xl',
@@ -191,7 +196,6 @@ const EditorExportPreviewModal: React.FC = () => {
             if (loading) return;
             await exportSelected();
           }}
-          onClose={() => setOpen(false)}
         />
       </div>
     </div>
