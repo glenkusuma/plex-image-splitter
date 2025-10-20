@@ -73,6 +73,24 @@ export interface PresetData {
   snapPx: number;
 }
 
+// SessionData extends PresetData with export-related configuration
+export interface SessionData extends PresetData {
+  exportZipName: string;
+  exportFilenamePattern: string;
+  exportMinWidthPx: number;
+  exportMinHeightPx: number;
+  exportDryRun: boolean;
+  exportMaxWidthPx: number;
+  exportMaxHeightPx: number;
+  exportUseZipName: boolean;
+  exportUseFilenamePattern: boolean;
+  exportUseFilters: boolean;
+  exportUseMinWidth: boolean;
+  exportUseMinHeight: boolean;
+  exportUseMaxWidth: boolean;
+  exportUseMaxHeight: boolean;
+}
+
 export { MAX_HISTORY, MAX_SPLITS } from '@/constant/env';
 
 export type Action =
@@ -90,7 +108,7 @@ export type Action =
       payload: { index: number; align: Align; position: number };
     }
   | { type: 'APPLY_PRESET'; payload: { data: PresetData } }
-  | { type: 'HYDRATE_SESSION'; payload: { data: PresetData } }
+  | { type: 'HYDRATE_SESSION'; payload: { data: SessionData } }
   | { type: 'ADD_NEW_HLINE'; payload?: { count?: number } }
   | { type: 'ADD_NEW_VLINE'; payload?: { count?: number } }
   | { type: 'REMOVE_HLINE' }

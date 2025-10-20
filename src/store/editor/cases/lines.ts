@@ -3,11 +3,16 @@ import {
   generateEvenSplits,
   subdivide,
 } from '@/store/editor/state';
-import type { EditorState, PresetData, SplitLine } from '@/store/editor/types';
+import type {
+  EditorState,
+  PresetData,
+  SessionData,
+  SplitLine,
+} from '@/store/editor/types';
 
 export const hydrateSession = (
   state: EditorState,
-  d: PresetData
+  d: SessionData
 ): EditorState => ({
   ...state,
   horizontalSplit: d.horizontalSplit ?? state.horizontalSplit,
@@ -24,6 +29,22 @@ export const hydrateSession = (
   guideThicknessV: d.guideThicknessV ?? state.guideThicknessV,
   snapEnabled: d.snapEnabled ?? state.snapEnabled,
   snapPx: d.snapPx ?? state.snapPx,
+  // export options
+  exportZipName: d.exportZipName ?? state.exportZipName,
+  exportFilenamePattern: d.exportFilenamePattern ?? state.exportFilenamePattern,
+  exportMinWidthPx: d.exportMinWidthPx ?? state.exportMinWidthPx,
+  exportMinHeightPx: d.exportMinHeightPx ?? state.exportMinHeightPx,
+  exportDryRun: d.exportDryRun ?? state.exportDryRun,
+  exportMaxWidthPx: d.exportMaxWidthPx ?? state.exportMaxWidthPx,
+  exportMaxHeightPx: d.exportMaxHeightPx ?? state.exportMaxHeightPx,
+  exportUseZipName: d.exportUseZipName ?? state.exportUseZipName,
+  exportUseFilenamePattern:
+    d.exportUseFilenamePattern ?? state.exportUseFilenamePattern,
+  exportUseFilters: d.exportUseFilters ?? state.exportUseFilters,
+  exportUseMinWidth: d.exportUseMinWidth ?? state.exportUseMinWidth,
+  exportUseMinHeight: d.exportUseMinHeight ?? state.exportUseMinHeight,
+  exportUseMaxWidth: d.exportUseMaxWidth ?? state.exportUseMaxWidth,
+  exportUseMaxHeight: d.exportUseMaxHeight ?? state.exportUseMaxHeight,
 });
 
 export const applyPreset = (
