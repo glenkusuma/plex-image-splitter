@@ -1,10 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect } from 'react';
 
-import { preparePreview, SlicePreview } from '@/lib/export';
-
-import Button from '@/components/buttons/Button';
-
-import { useEditor } from '@/store/editor';
+import {
+  FiltersBar,
+  OptionsBar,
+} from '@/components/editor/export-preview/Controls';
+import FiltersPanel from '@/components/editor/export-preview/FiltersPanel';
+import Footer from '@/components/editor/export-preview/Footer';
+import Header from '@/components/editor/export-preview/Header';
+import PreviewTable from '@/components/editor/export-preview/PreviewTable';
+import { useExportPreviewState } from '@/components/editor/export-preview/useExportPreviewState';
 
 declare global {
   interface Window {
@@ -12,113 +16,58 @@ declare global {
   }
 }
 
-const EditorExportPreviewModal = () => {
-  const { state, dispatch } = useEditor();
-  const [open, setOpen] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [items, setItems] = useState<SlicePreview[]>([]);
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
-  const [filtersEnabled, setFiltersEnabled] = useState<boolean>(false);
-  const [useMinW, setUseMinW] = useState<boolean>(false);
-  const [useMinH, setUseMinH] = useState<boolean>(false);
-  const [useMaxW, setUseMaxW] = useState<boolean>(false);
-  const [useMaxH, setUseMaxH] = useState<boolean>(false);
-  const [minW, setMinW] = useState<number>(1);
-  const [minH, setMinH] = useState<number>(1);
-  const [maxW, setMaxW] = useState<number>(Number.MAX_SAFE_INTEGER);
-  const [maxH, setMaxH] = useState<number>(Number.MAX_SAFE_INTEGER);
-  const filteredItems = useMemo(() => {
-    if (!filtersEnabled) return items;
-    return items.filter((p) => {
-      if (useMinW && p.width < minW) return false;
-      if (useMinH && p.height < minH) return false;
-      if (useMaxW && p.width > maxW) return false;
-      if (useMaxH && p.height > maxH) return false;
-      return true;
-    });
-  }, [
+const EditorExportPreviewModal: React.FC = () => {
+  const {
+    state,
+    dispatch,
+    open,
+    setOpen,
+    fullscreen,
+    setFullscreen,
+    loading,
+    showFilters,
+    setShowFilters,
+    showOptions,
+    setShowOptions,
     filtersEnabled,
-    items,
+    setFiltersEnabled,
     useMinW,
+    setUseMinW,
     useMinH,
+    setUseMinH,
     useMaxW,
+    setUseMaxW,
     useMaxH,
+    setUseMaxH,
     minW,
+    setMinW,
     minH,
+    setMinH,
     maxW,
+    setMaxW,
     maxH,
-  ]);
-  // Maps for filename placeholders
-  const findexMap = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredItems.forEach((p, idx) => map.set(`${p.i}-${p.index}`, idx));
-    return map;
-  }, [filteredItems]);
-  const sindexMap = useMemo(() => {
-    const map = new Map<string, number>();
-    let s = 0;
-    filteredItems.forEach((p) => {
-      const key = `${p.i}-${p.index}`;
-      if (selected[key]) {
-        map.set(key, s);
-        s += 1;
-      }
-    });
-    return map;
-  }, [filteredItems, selected]);
-  const formatName = useMemo(() => {
-    const pattern =
-      (state.exportUseFilenamePattern
-        ? state.exportFilenamePattern
-        : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
-    return (p: SlicePreview): string => {
-      const key = `${p.i}-${p.index}`;
-      return pattern
-        .replace('{i}', String(p.i))
-        .replace('{index}', String(p.index))
-        .replace('{w}', String(p.width))
-        .replace('{h}', String(p.height))
-        .replace('{findex}', String(findexMap.get(key) ?? ''))
-        .replace('{sindex}', String(sindexMap.get(key) ?? ''));
-    };
-  }, [
-    state.exportUseFilenamePattern,
-    state.exportFilenamePattern,
-    findexMap,
-    sindexMap,
-  ]);
-  const selectedCount = useMemo(
-    () =>
-      Object.entries(selected).filter(
-        ([k, v]) => v && filteredItems.find((p) => `${p.i}-${p.index}` === k)
-      ).length,
-    [selected, filteredItems]
-  );
+    setMaxH,
+    filteredItems,
+    selected,
+    setSelected,
+    selectedCount,
+    formatName,
+    openPreview,
+    regenerate,
+    matchFromExportOptions,
+    applyNaming,
+    resetFilters,
+    applyFiltersToExport,
+    exportAll,
+    exportSelected,
+  } = useExportPreviewState();
 
   useEffect(() => {
-    // listen for a custom event to open preview
-    const onOpen = async () => {
-      setOpen(true);
-      setFullscreen(false);
-      setLoading(true);
-      const srcs = state.activeSrc ? [state.activeSrc] : [];
-      const previews = await preparePreview(state, srcs);
-      setItems(previews);
-      const initial: Record<string, boolean> = {};
-      previews.forEach((p) => (initial[`${p.i}-${p.index}`] = true));
-      setSelected(initial);
-      setLoading(false);
-    };
-    window.__openExportPreview = onOpen;
+    window.__openExportPreview = openPreview;
     return () => {
-      if (window.__openExportPreview === onOpen) {
-        window.__openExportPreview = undefined;
-      }
+      if (window.__openExportPreview) delete window.__openExportPreview;
     };
-  }, [state]);
+  }, [openPreview]);
 
   if (!open) return null;
 
@@ -132,665 +81,113 @@ const EditorExportPreviewModal = () => {
             : 'max-h-[85vh] w-[95vw] sm:max-w-3xl md:max-w-5xl xl:max-w-7xl',
         ].join(' ')}
       >
-        <div className='mb-3 flex items-center gap-2'>
-          <h3 className='text-lg font-semibold'>Export Preview</h3>
-          <span
-            className='ml-auto text-sm text-gray-300'
-            title='Number of selected items out of filtered list'
-          >
-            Selected {selectedCount} / {filteredItems.length}
-          </span>
-          <Button
-            size='sm'
-            onClick={() => setFullscreen((f) => !f)}
-            title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {fullscreen ? 'Windowed' : 'Fullscreen'}
-          </Button>
-          <Button
-            size='sm'
-            onClick={() => setOpen(false)}
-            title='Close preview'
-          >
-            Close
-          </Button>
-        </div>
-        <div className='mb-3 flex items-center justify-between'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button
-              size='sm'
-              onClick={() => {
-                if (loading) return;
-                const all: Record<string, boolean> = {};
-                filteredItems.forEach((p) => (all[`${p.i}-${p.index}`] = true));
-                setSelected(all);
-              }}
-              title='Select all filtered items'
-              disabled={loading}
-            >
-              Select all
-            </Button>
-            <Button
-              size='sm'
-              onClick={() => {
-                if (!loading) setSelected({});
-              }}
-              title='Clear all selections'
-              disabled={loading}
-            >
-              Deselect all
-            </Button>
-            <Button
-              size='sm'
-              onClick={async () => {
-                if (loading) return;
-                setLoading(true);
-                const previews = await preparePreview(
-                  state,
-                  state.activeSrc ? [state.activeSrc] : []
-                );
-                setItems(previews);
-                const initial: Record<string, boolean> = {};
-                previews.forEach((p) => (initial[`${p.i}-${p.index}`] = true));
-                setSelected(initial);
-                setLoading(false);
-              }}
-              title='Re-generate previews from current splits/options'
-              disabled={loading}
-            >
-              Regenerate
-            </Button>
-          </div>
-          <div className='flex items-center gap-2'>
-            <Button
-              size='sm'
-              onClick={() => {
-                if (!loading) setShowFilters((s) => !s);
-              }}
-              title={showFilters ? 'Hide filters' : 'Show filters'}
-              disabled={loading}
-            >
-              {showFilters ? 'Hide filters' : 'Show filters'}
-            </Button>
-            <Button
-              size='sm'
-              onClick={() => {
-                if (!loading) setShowOptions((s) => !s);
-              }}
-              title={
-                showOptions
-                  ? 'Hide preview export options'
-                  : 'Show preview export options'
-              }
-              disabled={loading}
-            >
-              {showOptions ? 'Hide options' : 'Show options'}
-            </Button>
-            <Button
-              size='sm'
-              onClick={() => {
-                if (loading) return;
-                // Pull current Export Options into the preview controls
-                setFiltersEnabled(!!state.exportUseFilters);
-                setUseMinW(!!state.exportUseMinWidth);
-                setUseMinH(!!state.exportUseMinHeight);
-                setUseMaxW(!!state.exportUseMaxWidth);
-                setUseMaxH(!!state.exportUseMaxHeight);
-                setMinW(Math.max(1, state.exportMinWidthPx || 1));
-                setMinH(Math.max(1, state.exportMinHeightPx || 1));
-                setMaxW(
-                  Math.max(1, state.exportMaxWidthPx || Number.MAX_SAFE_INTEGER)
-                );
-                setMaxH(
-                  Math.max(
-                    1,
-                    state.exportMaxHeightPx || Number.MAX_SAFE_INTEGER
-                  )
-                );
-              }}
-              title='Match Preview filters to current Export Options'
-              disabled={loading}
-            >
-              Match from Export Options
-            </Button>
-          </div>
-        </div>
-        {/* Naming & Zip options within preview (collapsible) */}
-        {showOptions && (
-          <div className='mb-3 rounded-md border border-gray-700 p-2'>
-            <div className='mb-2 flex items-center gap-2'>
-              <label className='text-sm'>Preview Export Options</label>
-              <Button
-                size='sm'
-                className='ml-auto'
-                onClick={() => {
-                  // "Apply" ensures flags are set; values already update live via onChange
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS_FLAGS',
-                    payload: {
-                      useZipName: state.exportUseZipName,
-                      useFilenamePattern: state.exportUseFilenamePattern,
-                    },
-                  });
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS',
-                    payload: {
-                      zipName: state.exportZipName,
-                      filenamePattern: state.exportFilenamePattern,
-                    },
-                  });
-                }}
-                title='Apply zip and filename pattern to export options'
-              >
-                Apply naming to Export
-              </Button>
-            </div>
-            <div className='grid grid-cols-12 items-center gap-2'>
-              <label
-                className='col-span-5 text-gray-300'
-                htmlFor='previewZipName'
-              >
-                Zip file name
-              </label>
-              <input
-                id='previewZipName'
-                name='previewZipName'
-                type='text'
-                className='col-span-6 rounded bg-gray-800 px-2 py-1 text-white'
-                value={state.exportZipName}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS',
-                    payload: { zipName: e.target.value || 'export.zip' },
-                  })
-                }
-                placeholder='export.zip'
-                title='Name of the output zip file'
-              />
-              <label
-                className='col-span-1 inline-flex items-center gap-1 text-xs text-gray-300'
-                title='Use this zip name when exporting'
-                htmlFor='previewZipNameUse'
-              >
-                <input
-                  id='previewZipNameUse'
-                  name='previewZipNameUse'
-                  type='checkbox'
-                  checked={state.exportUseZipName}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'SET_EXPORT_OPTIONS_FLAGS',
-                      payload: { useZipName: e.target.checked },
-                    })
-                  }
-                />
-                Use
-              </label>
-            </div>
-            <div className='mt-2 grid grid-cols-12 items-center gap-2'>
-              <label
-                className='col-span-5 text-gray-300'
-                htmlFor='previewPattern'
-              >
-                Filename pattern
-              </label>
-              <input
-                id='previewPattern'
-                name='previewPattern'
-                type='text'
-                className='col-span-6 rounded bg-gray-800 px-2 py-1 text-white'
-                value={state.exportFilenamePattern}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS',
-                    payload: { filenamePattern: e.target.value },
-                  })
-                }
-                placeholder='image-{i}-split-{index}.png'
-                title='Use placeholders: {i} source, {index} slice-in-source, {w} width, {h} height, {findex} filtered index, {sindex} selected index'
-              />
-              <label
-                className='col-span-1 inline-flex items-center gap-1 text-xs text-gray-300'
-                title='Use this filename pattern when exporting'
-                htmlFor='previewPatternUse'
-              >
-                <input
-                  id='previewPatternUse'
-                  name='previewPatternUse'
-                  type='checkbox'
-                  checked={state.exportUseFilenamePattern}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'SET_EXPORT_OPTIONS_FLAGS',
-                      payload: { useFilenamePattern: e.target.checked },
-                    })
-                  }
-                />
-                Use
-              </label>
-            </div>
-            <p className='mt-2 text-xs text-gray-400'>
-              Pattern placeholders: {`{i}`}, {`{index}`}, {`{w}`}, {`{h}`},{' '}
-              {`{findex}`} (index after filters), {`{sindex}`} (index in
-              selected-for-export).
-            </p>
-          </div>
-        )}
-        {showFilters && (
-          <div className='mb-3 rounded-md border border-gray-700 p-2'>
-            <div className='mb-2 flex items-center gap-2'>
-              <label className='text-sm' htmlFor='filtersEnable'>
-                Filters
-              </label>
-              <label
-                className='ml-auto inline-flex items-center gap-1 text-xs text-gray-300'
-                htmlFor='filtersEnable'
-              >
-                <input
-                  id='filtersEnable'
-                  name='filtersEnable'
-                  type='checkbox'
-                  checked={filtersEnabled}
-                  onChange={(e) => setFiltersEnabled(e.target.checked)}
-                />
-                Enable
-              </label>
-            </div>
-            <div className='grid grid-cols-2 gap-3'>
-              {/* Min width */}
-              <div className='grid grid-cols-12 items-center gap-2'>
-                <label className='col-span-6 text-gray-300' htmlFor='modalMinW'>
-                  Min width
-                </label>
-                <input
-                  id='modalMinW'
-                  name='modalMinW'
-                  type='number'
-                  min={1}
-                  className='col-span-4 rounded bg-gray-800 px-2 py-1 text-white'
-                  value={String(minW)}
-                  onChange={(e) =>
-                    setMinW(Math.max(1, Number(e.target.value || 1)))
-                  }
-                />
-                <label
-                  className='col-span-2 inline-flex items-center gap-1 text-xs text-gray-300'
-                  htmlFor='modalMinWUse'
-                >
-                  <input
-                    id='modalMinWUse'
-                    name='modalMinWUse'
-                    type='checkbox'
-                    checked={useMinW}
-                    onChange={(e) => setUseMinW(e.target.checked)}
-                  />
-                  Use
-                </label>
-              </div>
-              {/* Min height */}
-              <div className='grid grid-cols-12 items-center gap-2'>
-                <label className='col-span-6 text-gray-300' htmlFor='modalMinH'>
-                  Min height
-                </label>
-                <input
-                  id='modalMinH'
-                  name='modalMinH'
-                  type='number'
-                  min={1}
-                  className='col-span-4 rounded bg-gray-800 px-2 py-1 text-white'
-                  value={String(minH)}
-                  onChange={(e) =>
-                    setMinH(Math.max(1, Number(e.target.value || 1)))
-                  }
-                />
-                <label
-                  className='col-span-2 inline-flex items-center gap-1 text-xs text-gray-300'
-                  htmlFor='modalMinHUse'
-                >
-                  <input
-                    id='modalMinHUse'
-                    name='modalMinHUse'
-                    type='checkbox'
-                    checked={useMinH}
-                    onChange={(e) => setUseMinH(e.target.checked)}
-                  />
-                  Use
-                </label>
-              </div>
-              {/* Max width */}
-              <div className='grid grid-cols-12 items-center gap-2'>
-                <label className='col-span-6 text-gray-300' htmlFor='modalMaxW'>
-                  Max width
-                </label>
-                <input
-                  id='modalMaxW'
-                  name='modalMaxW'
-                  type='number'
-                  min={1}
-                  className='col-span-4 rounded bg-gray-800 px-2 py-1 text-white'
-                  value={String(maxW)}
-                  onChange={(e) =>
-                    setMaxW(Math.max(1, Number(e.target.value || 1)))
-                  }
-                />
-                <label
-                  className='col-span-2 inline-flex items-center gap-1 text-xs text-gray-300'
-                  htmlFor='modalMaxWUse'
-                >
-                  <input
-                    id='modalMaxWUse'
-                    name='modalMaxWUse'
-                    type='checkbox'
-                    checked={useMaxW}
-                    onChange={(e) => setUseMaxW(e.target.checked)}
-                  />
-                  Use
-                </label>
-              </div>
-              {/* Max height */}
-              <div className='grid grid-cols-12 items-center gap-2'>
-                <label className='col-span-6 text-gray-300' htmlFor='modalMaxH'>
-                  Max height
-                </label>
-                <input
-                  id='modalMaxH'
-                  name='modalMaxH'
-                  type='number'
-                  min={1}
-                  className='col-span-4 rounded bg-gray-800 px-2 py-1 text-white'
-                  value={String(maxH)}
-                  onChange={(e) =>
-                    setMaxH(Math.max(1, Number(e.target.value || 1)))
-                  }
-                />
-                <label
-                  className='col-span-2 inline-flex items-center gap-1 text-xs text-gray-300'
-                  htmlFor='modalMaxHUse'
-                >
-                  <input
-                    id='modalMaxHUse'
-                    name='modalMaxHUse'
-                    type='checkbox'
-                    checked={useMaxH}
-                    onChange={(e) => setUseMaxH(e.target.checked)}
-                  />
-                  Use
-                </label>
-              </div>
-            </div>
-            <div className='mt-2 flex items-center gap-2'>
-              <Button
-                size='sm'
-                onClick={() => {
-                  // reset local
-                  setFiltersEnabled(false);
-                  setUseMinW(false);
-                  setUseMinH(false);
-                  setUseMaxW(false);
-                  setUseMaxH(false);
-                  setMinW(1);
-                  setMinH(1);
-                  setMaxW(Number.MAX_SAFE_INTEGER);
-                  setMaxH(Number.MAX_SAFE_INTEGER);
-                  // reset only export filter-related options
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS_FLAGS',
-                    payload: {
-                      useFilters: false,
-                      useMinWidth: false,
-                      useMinHeight: false,
-                      useMaxWidth: false,
-                      useMaxHeight: false,
-                    },
-                  });
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS',
-                    payload: { minWidthPx: 1, minHeightPx: 1 },
-                  });
-                  dispatch({
-                    type: 'SET_EXPORT_MAX',
-                    payload: {
-                      maxWidthPx: Number.MAX_SAFE_INTEGER,
-                      maxHeightPx: Number.MAX_SAFE_INTEGER,
-                    },
-                  });
-                }}
-              >
-                Reset filters
-              </Button>
-              <Button
-                size='sm'
-                variant='primary'
-                onClick={() => {
-                  // apply local to export options
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS_FLAGS',
-                    payload: {
-                      useFilters: filtersEnabled,
-                      useMinWidth: useMinW,
-                      useMinHeight: useMinH,
-                      useMaxWidth: useMaxW,
-                      useMaxHeight: useMaxH,
-                    },
-                  });
-                  dispatch({
-                    type: 'SET_EXPORT_OPTIONS',
-                    payload: { minWidthPx: minW, minHeightPx: minH },
-                  });
-                  dispatch({
-                    type: 'SET_EXPORT_MAX',
-                    payload: { maxWidthPx: maxW, maxHeightPx: maxH },
-                  });
-                }}
-              >
-                Apply to Export
-              </Button>
-            </div>
-            <p className='mt-2 text-xs text-gray-400'>
-              Toggle filters here, then “Apply to Export” to use them during
-              export. “Reset filters” affects only filter-related export
-              options.
-            </p>
-          </div>
-        )}
+        <Header
+          selectedCount={selectedCount}
+          totalFiltered={filteredItems.length}
+          fullscreen={fullscreen}
+          onToggleFullscreen={() => setFullscreen((f) => !f)}
+          onClose={() => setOpen(false)}
+        />
+        <FiltersBar
+          loading={loading}
+          onSelectAll={() => {
+            if (loading) return;
+            const all: Record<string, boolean> = {};
+            filteredItems.forEach((p) => (all[`${p.i}-${p.index}`] = true));
+            setSelected(all);
+          }}
+          onDeselectAll={() => {
+            if (!loading) setSelected({});
+          }}
+          onRegenerate={async () => {
+            if (loading) return;
+            await regenerate();
+          }}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          showOptions={showOptions}
+          setShowOptions={setShowOptions}
+          onMatchFromExportOptions={() => {
+            if (loading) return;
+            matchFromExportOptions();
+          }}
+        />
+        <OptionsBar
+          show={showOptions}
+          exportZipName={state.exportZipName}
+          exportUseZipName={state.exportUseZipName}
+          exportFilenamePattern={state.exportFilenamePattern}
+          exportUseFilenamePattern={state.exportUseFilenamePattern}
+          setZipName={(v) =>
+            dispatch({
+              type: 'SET_EXPORT_OPTIONS',
+              payload: { zipName: v || 'export.zip' },
+            })
+          }
+          setUseZipName={(v) =>
+            dispatch({
+              type: 'SET_EXPORT_OPTIONS_FLAGS',
+              payload: { useZipName: v },
+            })
+          }
+          setFilenamePattern={(v) =>
+            dispatch({
+              type: 'SET_EXPORT_OPTIONS',
+              payload: { filenamePattern: v },
+            })
+          }
+          setUseFilenamePattern={(v) =>
+            dispatch({
+              type: 'SET_EXPORT_OPTIONS_FLAGS',
+              payload: { useFilenamePattern: v },
+            })
+          }
+          onApplyNaming={applyNaming}
+        />
+        <FiltersPanel
+          show={showFilters}
+          filtersEnabled={filtersEnabled}
+          setFiltersEnabled={setFiltersEnabled}
+          minW={minW}
+          setMinW={(v) => setMinW(Math.max(1, v))}
+          minH={minH}
+          setMinH={(v) => setMinH(Math.max(1, v))}
+          maxW={maxW}
+          setMaxW={(v) => setMaxW(Math.max(1, v))}
+          maxH={maxH}
+          setMaxH={(v) => setMaxH(Math.max(1, v))}
+          useMinW={useMinW}
+          setUseMinW={setUseMinW}
+          useMinH={useMinH}
+          setUseMinH={setUseMinH}
+          useMaxW={useMaxW}
+          setUseMaxW={setUseMaxW}
+          useMaxH={useMaxH}
+          setUseMaxH={setUseMaxH}
+          onReset={resetFilters}
+          onApplyToExport={applyFiltersToExport}
+        />
         <div className='flex-1 overflow-auto rounded border border-gray-700'>
-          {loading ? (
-            <div className='w-full'>
-              {/* slim indeterminate progress bar */}
-              <div className='relative h-1 w-full overflow-hidden bg-gray-800'>
-                <div className='bg-primary-500 absolute left-0 top-0 h-1 w-1/3 animate-[loading_1.2s_linear_infinite]' />
-              </div>
-              <style jsx>{`
-                @keyframes loading {
-                  0% {
-                    transform: translateX(-100%);
-                  }
-                  50% {
-                    transform: translateX(0%);
-                  }
-                  100% {
-                    transform: translateX(100%);
-                  }
-                }
-              `}</style>
-              <div className='px-2 py-3'>
-                <div className='mb-2 flex items-center gap-3'>
-                  <svg
-                    className='h-5 w-5 animate-spin text-gray-300'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    xmlns='http://www.w3.org/2000/svg'
-                    aria-hidden
-                  >
-                    <circle
-                      className='opacity-25'
-                      cx='12'
-                      cy='12'
-                      r='10'
-                      stroke='currentColor'
-                      strokeWidth='4'
-                    ></circle>
-                    <path
-                      className='opacity-75'
-                      fill='currentColor'
-                      d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'
-                    ></path>
-                  </svg>
-                  <span className='text-sm text-gray-300'>
-                    Generating previews…
-                  </span>
-                </div>
-                <table className='w-full text-sm'>
-                  <thead className='sticky top-0 bg-gray-800'>
-                    <tr>
-                      <th className='px-2 py-2 text-left'>Sel</th>
-                      <th className='px-2 py-2 text-left'>Index</th>
-                      <th className='px-2 py-2 text-left'>Filename</th>
-                      <th className='px-2 py-2 text-left'>W×H</th>
-                      <th className='px-2 py-2 text-left'>Preview</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <tr
-                        key={`skeleton-${i}`}
-                        className='border-t border-gray-800'
-                      >
-                        <td className='px-2 py-3'>
-                          <div className='h-4 w-4 rounded-sm bg-gray-800' />
-                        </td>
-                        <td className='px-2 py-3'>
-                          <div className='h-4 w-6 rounded bg-gray-800' />
-                        </td>
-                        <td className='px-2 py-3'>
-                          <div className='h-4 w-48 rounded bg-gray-800' />
-                        </td>
-                        <td className='px-2 py-3'>
-                          <div className='h-4 w-12 rounded bg-gray-800' />
-                        </td>
-                        <td className='px-2 py-3'>
-                          <div className='h-16 w-24 rounded bg-gray-800' />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <table className='w-full text-sm'>
-              <thead className='sticky top-0 bg-gray-800'>
-                <tr>
-                  <th className='px-2 py-2 text-left'>Sel</th>
-                  <th className='px-2 py-2 text-left'>Index</th>
-                  <th className='px-2 py-2 text-left'>Filename</th>
-                  <th className='px-2 py-2 text-left'>W×H</th>
-                  <th className='px-2 py-2 text-left'>Preview</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((p) => {
-                  const key = `${p.i}-${p.index}`;
-                  const checked = !!selected[key];
-                  return (
-                    <tr key={key} className='border-t border-gray-800'>
-                      <td className='px-2 py-2'>
-                        <input
-                          type='checkbox'
-                          name={`select-${key}`}
-                          aria-label={`Select slice source ${p.i} index ${p.index}`}
-                          checked={checked}
-                          disabled={loading}
-                          onChange={(e) =>
-                            setSelected((s) => ({
-                              ...s,
-                              [key]: e.target.checked,
-                            }))
-                          }
-                        />
-                      </td>
-                      <td className='px-2 py-2'>{p.index}</td>
-                      <td className='px-2 py-2'>{formatName(p)}</td>
-                      <td className='px-2 py-2'>
-                        {p.width}×{p.height}
-                      </td>
-                      <td className='px-2 py-2'>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.dataUrl}
-                          alt={p.name}
-                          className='h-16 w-auto rounded border border-gray-700 bg-black object-contain'
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+          <PreviewTable
+            loading={loading}
+            filteredItems={filteredItems}
+            selected={selected}
+            setSelected={(next) => setSelected(next)}
+            formatName={formatName}
+          />
         </div>
-        <div className='mt-3 flex items-center gap-2'>
-          <Button
-            size='sm'
-            onClick={async () => {
-              if (loading) return;
-              // Export all filtered
-              const whitelist = new Set<string>();
-              filteredItems.forEach((p) => whitelist.add(`${p.i}-${p.index}`));
-              const blob = await (
-                await import('@/lib/export')
-              ).exportImages(state, state.activeSrc ? [state.activeSrc] : [], {
-                whitelist,
-              });
-              const a = document.createElement('a');
-              a.href = URL.createObjectURL(blob);
-              a.download =
-                (state.exportUseZipName ? state.exportZipName : 'export.zip') ||
-                'export.zip';
-              a.click();
-            }}
-            title='Export all filtered items using current options'
-            disabled={loading}
-          >
-            Export All
-          </Button>
-          <Button
-            size='sm'
-            onClick={async () => {
-              if (loading) return;
-              const whitelist = new Set<string>();
-              filteredItems.forEach((p) => {
-                const key = `${p.i}-${p.index}`;
-                if (selected[key]) whitelist.add(key);
-              });
-              const blob = await (
-                await import('@/lib/export')
-              ).exportImages(state, state.activeSrc ? [state.activeSrc] : [], {
-                whitelist,
-              });
-              const a = document.createElement('a');
-              a.href = URL.createObjectURL(blob);
-              a.download =
-                (state.exportUseZipName ? state.exportZipName : 'export.zip') ||
-                'export.zip';
-              a.click();
-            }}
-            title='Export only the selected items using current options'
-            disabled={loading}
-          >
-            Export Selected
-          </Button>
-          <Button
-            size='sm'
-            onClick={() => setOpen(false)}
-            title='Close preview'
-          >
-            Close
-          </Button>
-          <span className='ml-auto text-xs text-gray-400'>
-            Tips: hover icons for tooltips; fullscreen removes gaps.
-          </span>
-        </div>
+        <Footer
+          loading={loading}
+          onExportAll={async () => {
+            if (loading) return;
+            await exportAll();
+          }}
+          onExportSelected={async () => {
+            if (loading) return;
+            await exportSelected();
+          }}
+          onClose={() => setOpen(false)}
+        />
       </div>
     </div>
   );
