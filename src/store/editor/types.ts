@@ -73,8 +73,7 @@ export interface PresetData {
   snapPx: number;
 }
 
-export const MAX_SPLITS = 100;
-export const MAX_HISTORY = 100;
+export { MAX_HISTORY, MAX_SPLITS } from '@/constant/env';
 
 export type Action =
   | { type: 'setActiveSrc'; payload: { src: string } }
