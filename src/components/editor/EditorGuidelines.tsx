@@ -30,12 +30,20 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
   const snapPct = useCallback(
     (align: 'horizontal' | 'vertical', nextPct: number) => {
       if (!state.snapEnabled) return nextPct;
-      const total = align === 'horizontal' ? state.canvasSize.height || 1 : state.canvasSize.width || 1;
+      const total =
+        align === 'horizontal'
+          ? state.canvasSize.height || 1
+          : state.canvasSize.width || 1;
       const px = (nextPct / 100) * total;
       const snappedPx = Math.round(px / state.snapPx) * state.snapPx;
       return (snappedPx / total) * 100;
     },
-    [state.snapEnabled, state.canvasSize.height, state.canvasSize.width, state.snapPx]
+    [
+      state.snapEnabled,
+      state.canvasSize.height,
+      state.canvasSize.width,
+      state.snapPx,
+    ]
   );
 
   const propogateClickFromChild = (
@@ -86,7 +94,10 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
       if (!rect) return;
       dispatch({
         type: 'SET_CANVAS_SIZE',
-        payload: { width: Math.round(rect.width), height: Math.round(rect.height) },
+        payload: {
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        },
       });
     };
     updateSize();
@@ -98,7 +109,8 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const hasSelection =
-        state.selected.horizontal.length > 0 || state.selected.vertical.length > 0;
+        state.selected.horizontal.length > 0 ||
+        state.selected.vertical.length > 0;
       if (!hasSelection) return;
       if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         e.preventDefault();
@@ -111,8 +123,14 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
           const total = state.canvasSize.height || 1;
           state.selected.horizontal.forEach((index) => {
             const currentPct = state.horizontalSplit[index]?.position ?? 0;
-            const newPct = snapPct('horizontal', currentPct + (dir * pxStep * 100) / total);
-            dispatch({ type: 'SET_LINE_POSITION', payload: { align: 'horizontal', index, position: newPct } });
+            const newPct = snapPct(
+              'horizontal',
+              currentPct + (dir * pxStep * 100) / total
+            );
+            dispatch({
+              type: 'SET_LINE_POSITION',
+              payload: { align: 'horizontal', index, position: newPct },
+            });
           });
         }
         // Move all selected verticals with Left/Right
@@ -120,8 +138,14 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
           const total = state.canvasSize.width || 1;
           state.selected.vertical.forEach((index) => {
             const currentPct = state.verticalSplit[index]?.position ?? 0;
-            const newPct = snapPct('vertical', currentPct + (dir * pxStep * 100) / total);
-            dispatch({ type: 'SET_LINE_POSITION', payload: { align: 'vertical', index, position: newPct } });
+            const newPct = snapPct(
+              'vertical',
+              currentPct + (dir * pxStep * 100) / total
+            );
+            dispatch({
+              type: 'SET_LINE_POSITION',
+              payload: { align: 'vertical', index, position: newPct },
+            });
           });
         }
       }
@@ -135,7 +159,17 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, state.selected, state.horizontalSplit, state.verticalSplit, state.canvasSize.height, state.canvasSize.width, state.snapEnabled, state.snapPx, snapPct]);
+  }, [
+    dispatch,
+    state.selected,
+    state.horizontalSplit,
+    state.verticalSplit,
+    state.canvasSize.height,
+    state.canvasSize.width,
+    state.snapEnabled,
+    state.snapPx,
+    snapPct,
+  ]);
 
   return (
     <div
@@ -148,31 +182,34 @@ const EditorGuidelines = ({ imageFill }: { imageFill: [number, number] }) => {
       }}
       {...dragBinders}
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) dispatch({ type: 'CLEAR_SELECTED_LINES' });
+        if (e.target === e.currentTarget)
+          dispatch({ type: 'CLEAR_SELECTED_LINES' });
       }}
     >
-      {state.guidesVisible && state.horizontalSplit.map((line: SplitLine, i: number) => (
-        <EditorLine
-          line={line}
-          key={`hline-${i}`}
-          index={i}
-          clickHandler={propogateClickFromChild}
-          horizontal
-          selected={state.selected.horizontal.includes(i)}
-          color={state.guideColorH}
-        />
-      ))}
-      {state.guidesVisible && state.verticalSplit.map((line: SplitLine, i: number) => (
-        <EditorLine
-          line={line}
-          key={`vline-${i}`}
-          index={i}
-          clickHandler={propogateClickFromChild}
-          vertical
-          selected={state.selected.vertical.includes(i)}
-          color={state.guideColorV}
-        />
-      ))}
+      {state.guidesVisible &&
+        state.horizontalSplit.map((line: SplitLine, i: number) => (
+          <EditorLine
+            line={line}
+            key={`hline-${i}`}
+            index={i}
+            clickHandler={propogateClickFromChild}
+            horizontal
+            selected={state.selected.horizontal.includes(i)}
+            color={state.guideColorH}
+          />
+        ))}
+      {state.guidesVisible &&
+        state.verticalSplit.map((line: SplitLine, i: number) => (
+          <EditorLine
+            line={line}
+            key={`vline-${i}`}
+            index={i}
+            clickHandler={propogateClickFromChild}
+            vertical
+            selected={state.selected.vertical.includes(i)}
+            color={state.guideColorV}
+          />
+        ))}
     </div>
   );
 };

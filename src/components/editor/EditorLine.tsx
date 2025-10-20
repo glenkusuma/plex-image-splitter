@@ -13,7 +13,10 @@ interface EditorLineProps {
 }
 
 const EditorLine = forwardRef<HTMLSpanElement, EditorLineProps>(
-  ({ line, horizontal, vertical, clickHandler, index, selected, color }, ref) => {
+  (
+    { line, horizontal, vertical, clickHandler, index, selected, color },
+    ref
+  ) => {
     const { dispatch, state } = useEditor();
 
     const setLinePosition = (position: number) => {
@@ -39,7 +42,11 @@ const EditorLine = forwardRef<HTMLSpanElement, EditorLineProps>(
         if (multi) {
           dispatch({
             type: 'TOGGLE_SELECTED_LINE',
-            payload: { align: horizontal ? 'horizontal' : 'vertical', index, multi },
+            payload: {
+              align: horizontal ? 'horizontal' : 'vertical',
+              index,
+              multi,
+            },
           });
         } else {
           dispatch({
@@ -53,20 +60,34 @@ const EditorLine = forwardRef<HTMLSpanElement, EditorLineProps>(
 
     const zIndex = 10;
     const isSelected = !!selected;
-    const baseHex = (horizontal ? state.guideColorH : state.guideColorV) || color || state.guideColor;
+    const baseHex =
+      (horizontal ? state.guideColorH : state.guideColorV) ||
+      color ||
+      state.guideColor;
     const alpha = horizontal ? state.guideAlphaH : state.guideAlphaV;
-    const thickness = horizontal ? state.guideThicknessH : state.guideThicknessV;
+    const thickness = horizontal
+      ? state.guideThicknessH
+      : state.guideThicknessV;
     const toRgba = (hex: string, a: number) => {
       const h = hex.replace('#', '');
-      const bigint = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+      const bigint = parseInt(
+        h.length === 3
+          ? h
+              .split('')
+              .map((c) => c + c)
+              .join('')
+          : h,
+        16
+      );
       const r = (bigint >> 16) & 255;
       const g = (bigint >> 8) & 255;
       const b = bigint & 255;
       return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
     };
-    const guideColor = isSelected ? toRgba(state.selectedGuideColor, state.selectedGuideAlpha) : toRgba(baseHex, alpha);
-    const lineClassBase =
-      'absolute rounded border transition-shadow';
+    const guideColor = isSelected
+      ? toRgba(state.selectedGuideColor, state.selectedGuideAlpha)
+      : toRgba(baseHex, alpha);
+    const lineClassBase = 'absolute rounded border transition-shadow';
     const lineClassHover = 'hover:shadow-[0_0_0_1px_rgba(255,255,255,0.6)]';
     const selectedRing = isSelected
       ? 'shadow-[0_0_0_2px_rgba(255,255,255,0.9)]'

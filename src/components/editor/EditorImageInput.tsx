@@ -47,12 +47,16 @@ const EditorImageInput = () => {
         placeholder='Image URL'
         value={imageLabel}
         onChange={tryImageChange}
+        id='image-url'
+        name='imageUrl'
       />
       <input
         type='file'
         accept='image/*'
         className='hidden'
         ref={hiddenInputRef}
+        id='image-file'
+        name='file'
         onClick={(e) => {
           const target = e.target as HTMLInputElement;
           if (target) target.value = '';

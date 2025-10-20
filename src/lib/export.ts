@@ -35,7 +35,10 @@ export const exportImages = async (
     key: string; // `${i}-${index}`
     i: number;
     index: number; // slice index within image before any filtering
-    x: number; y: number; width: number; height: number; // in pixels
+    x: number;
+    y: number;
+    width: number;
+    height: number; // in pixels
   };
 
   const cleanUp = (splits: SplitLine[]) => {
@@ -46,7 +49,8 @@ export const exportImages = async (
     ];
     supplemented = supplemented.sort((a, b) => a.position - b.position);
     supplemented = supplemented.filter(
-      (split, index) => index === 0 || split.position !== supplemented[index - 1].position
+      (split, index) =>
+        index === 0 || split.position !== supplemented[index - 1].position
     );
     return supplemented;
   };
@@ -64,7 +68,12 @@ export const exportImages = async (
       cleanUp(state.horizontalSplit),
       cleanUp(state.verticalSplit),
     ];
-    const percentSplits: { x: number; y: number; width: number; height: number }[] = [];
+    const percentSplits: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }[] = [];
     for (let hi = 0; hi < hsplits.length - 1; hi++) {
       for (let vj = 0; vj < vsplits.length - 1; vj++) {
         const [currHSplit, nextHSplit] = [hsplits[hi], hsplits[hi + 1]];
@@ -84,21 +93,40 @@ export const exportImages = async (
       height: (split.height * image.height) / 100,
     }));
     pixelSplits.forEach((split, index) => {
-      candidates.push({ key: `${i}-${index}`, i, index, x: split.x, y: split.y, width: split.width, height: split.height });
+      candidates.push({
+        key: `${i}-${index}`,
+        i,
+        index,
+        x: split.x,
+        y: split.y,
+        width: split.width,
+        height: split.height,
+      });
     });
   }
 
   // 3) Apply filters and whitelist
   const filtered = candidates.filter((c) => {
     if (!useFilters) return true;
-    if ((state.exportUseMinWidth && c.width < minW) || (state.exportUseMinHeight && c.height < minH)) return false;
-    if ((state.exportUseMaxWidth && c.width > maxW) || (state.exportUseMaxHeight && c.height > maxH)) return false;
+    if (
+      (state.exportUseMinWidth && c.width < minW) ||
+      (state.exportUseMinHeight && c.height < minH)
+    )
+      return false;
+    if (
+      (state.exportUseMaxWidth && c.width > maxW) ||
+      (state.exportUseMaxHeight && c.height > maxH)
+    )
+      return false;
     return true;
   });
 
-  const finalSelected = options && options.whitelist
-    ? filtered.filter((c) => options.whitelist && options.whitelist.has(c.key))
-    : filtered;
+  const finalSelected =
+    options && options.whitelist
+      ? filtered.filter(
+          (c) => options.whitelist && options.whitelist.has(c.key)
+        )
+      : filtered;
 
   // 4) Build index maps for {findex} and {sindex}
   const findexMap = new Map<string, number>();
@@ -107,7 +135,10 @@ export const exportImages = async (
   finalSelected.forEach((c, idx) => sindexMap.set(c.key, idx));
 
   // 5) Create files only for finalSelected
-  const pattern = (state.exportUseFilenamePattern ? state.exportFilenamePattern : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
+  const pattern =
+    (state.exportUseFilenamePattern
+      ? state.exportFilenamePattern
+      : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
   const files: File[] = [];
   const filePromises = finalSelected.map((c) => {
     const image = images[c.i];
@@ -136,7 +167,9 @@ export const exportImages = async (
   });
 
   const created = await Promise.all(filePromises);
-  created.forEach((f) => { if (f) files.push(f); });
+  created.forEach((f) => {
+    if (f) files.push(f);
+  });
 
   // 6) Add to zip and finalize
   const addPromises = files.map((file) => {
@@ -177,13 +210,18 @@ export const preparePreview = async (
       ];
       supplemented = supplemented.sort((a, b) => a.position - b.position);
       supplemented = supplemented.filter(
-        (split, index) => index === 0 || split.position !== supplemented[index - 1].position
+        (split, index) =>
+          index === 0 || split.position !== supplemented[index - 1].position
       );
       return supplemented;
     };
 
-    const [hsplits, vsplits] = [cleanUp(state.horizontalSplit), cleanUp(state.verticalSplit)];
-  const splits: { x: number; y: number; width: number; height: number }[] = [];
+    const [hsplits, vsplits] = [
+      cleanUp(state.horizontalSplit),
+      cleanUp(state.verticalSplit),
+    ];
+    const splits: { x: number; y: number; width: number; height: number }[] =
+      [];
     for (let ii = 0; ii < hsplits.length - 1; ii++) {
       for (let j = 0; j < vsplits.length - 1; j++) {
         const [currHSplit, nextHSplit] = [hsplits[ii], hsplits[ii + 1]];
@@ -191,8 +229,10 @@ export const preparePreview = async (
         splits.push({
           x: (currVSplit.position * image.width) / 100,
           y: (currHSplit.position * image.height) / 100,
-          width: ((nextVSplit.position - currVSplit.position) * image.width) / 100,
-          height: ((nextHSplit.position - currHSplit.position) * image.height) / 100,
+          width:
+            ((nextVSplit.position - currVSplit.position) * image.width) / 100,
+          height:
+            ((nextHSplit.position - currHSplit.position) * image.height) / 100,
         });
       }
     }
@@ -201,9 +241,15 @@ export const preparePreview = async (
     const minW = Math.max(1, state.exportMinWidthPx || 1);
     const minH = Math.max(1, state.exportMinHeightPx || 1);
     const maxW = Math.max(1, state.exportMaxWidthPx || Number.MAX_SAFE_INTEGER);
-    const maxH = Math.max(1, state.exportMaxHeightPx || Number.MAX_SAFE_INTEGER);
+    const maxH = Math.max(
+      1,
+      state.exportMaxHeightPx || Number.MAX_SAFE_INTEGER
+    );
     const formatName = (idx: number, w: number, h: number) => {
-      const pattern = (state.exportUseFilenamePattern ? state.exportFilenamePattern : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
+      const pattern =
+        (state.exportUseFilenamePattern
+          ? state.exportFilenamePattern
+          : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
       return pattern
         .replace('{i}', String(i))
         .replace('{index}', String(idx))
@@ -215,8 +261,16 @@ export const preparePreview = async (
       const w = Math.floor(split.width);
       const h = Math.floor(split.height);
       if (useFilters) {
-        if ((state.exportUseMinWidth && w < minW) || (state.exportUseMinHeight && h < minH)) return Promise.resolve<SlicePreview | null>(null);
-        if ((state.exportUseMaxWidth && w > maxW) || (state.exportUseMaxHeight && h > maxH)) return Promise.resolve<SlicePreview | null>(null);
+        if (
+          (state.exportUseMinWidth && w < minW) ||
+          (state.exportUseMinHeight && h < minH)
+        )
+          return Promise.resolve<SlicePreview | null>(null);
+        if (
+          (state.exportUseMaxWidth && w > maxW) ||
+          (state.exportUseMaxHeight && h > maxH)
+        )
+          return Promise.resolve<SlicePreview | null>(null);
       }
       const canvas = document.createElement('canvas');
       canvas.width = w;

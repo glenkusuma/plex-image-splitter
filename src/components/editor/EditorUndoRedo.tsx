@@ -8,7 +8,7 @@ const EditorPresets = () => {
   const { state, dispatch } = useEditor();
   const [canRedo, canUndo] = [
     state.history.splits.length > 0 &&
-    state.history.offset < state.history.splits.length - 1,
+      state.history.offset < state.history.splits.length - 1,
     state.history.splits.length > 0 && state.history.offset >= 0,
   ];
   return (
@@ -51,7 +51,10 @@ const EditorPresets = () => {
         />
       </Button>
       <Button
-        onClick={() => { if (typeof window !== 'undefined' && window.__openExportPreview) window.__openExportPreview(); }}
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.__openExportPreview)
+            window.__openExportPreview();
+        }}
         disabled={!state.active || state.exporting}
         title='Preview slices before exporting'
       >

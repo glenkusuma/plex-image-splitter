@@ -1,8 +1,8 @@
 import React from 'react';
 
 import Boundary from '@/components/Boundary';
+import EditorCustomPresets from '@/components/editor/custom-presets';
 import EditorBatchApplyButton from '@/components/editor/EditorBatchApplyButton';
-import EditorCustomPresets from '@/components/editor/EditorCustomPresets';
 import EditorExportOptions from '@/components/editor/EditorExportOptions';
 import EditorExportPreviewModal from '@/components/editor/EditorExportPreviewModal';
 import EditorPresets from '@/components/editor/EditorPresets';
@@ -39,7 +39,7 @@ const EditorButtonCollection = () => {
         <h2 className='text-xl font-bold'>History & Export</h2>
         <Boundary />
       </div>
-      <div className='grid grid-cols-3 gap-2'>
+      <div className='grid grid-cols-2 gap-2'>
         <EditorUndoRedo />
       </div>
       <EditorExportOptions />
