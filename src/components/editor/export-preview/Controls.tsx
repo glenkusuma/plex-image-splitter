@@ -98,6 +98,7 @@ type OptionsBarProps = {
   setFilenamePattern: (v: string) => void;
   setUseFilenamePattern: (v: boolean) => void;
   onApplyNaming: () => void;
+  onReset: () => void;
 };
 
 export const OptionsBar: React.FC<OptionsBarProps> = ({
@@ -111,21 +112,15 @@ export const OptionsBar: React.FC<OptionsBarProps> = ({
   setFilenamePattern,
   setUseFilenamePattern,
   onApplyNaming,
+  onReset,
 }) => {
   if (!show) return null;
   return (
     <div className='mb-3 rounded-md border border-gray-700 p-2'>
       <div className='mb-2 flex items-center gap-2'>
-        <label className='text-sm'>Preview Export Options</label>
-        <Button
-          size='sm'
-          className='ml-auto'
-          onClick={onApplyNaming}
-          title='Apply zip and filename pattern to export options'
-        >
-          Apply naming to Export
-        </Button>
+        <span className='text-sm'>Preview Export Options</span>
       </div>
+
       <div className='grid grid-cols-12 items-center gap-2'>
         <label className='col-span-5 text-gray-300' htmlFor='previewZipName'>
           Zip file name
@@ -155,6 +150,7 @@ export const OptionsBar: React.FC<OptionsBarProps> = ({
           Use
         </label>
       </div>
+
       <div className='mt-2 grid grid-cols-12 items-center gap-2'>
         <label className='col-span-5 text-gray-300' htmlFor='previewPattern'>
           Filename pattern
@@ -183,6 +179,14 @@ export const OptionsBar: React.FC<OptionsBarProps> = ({
           />
           Use
         </label>
+      </div>
+      <div className='mt-2 flex items-center gap-2'>
+        <Button size='sm' onClick={onReset}>
+          Reset options
+        </Button>
+        <Button size='sm' variant='primary' onClick={onApplyNaming}>
+          Apply to Export Options
+        </Button>
       </div>
       <p className='mt-2 text-xs text-gray-400'>
         Pattern placeholders: {`{i}`}, {`{index}`}, {`{w}`}, {`{h}`},{' '}

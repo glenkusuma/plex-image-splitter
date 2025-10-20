@@ -1,8 +1,18 @@
 import JSZip from 'jszip';
 
-import { EditorState, SplitLine } from '@/store/editor';
+import { EditorState } from '@/store/editor';
 
 import zipMD from '@/constant/zip';
+
+import {
+  cleanUpSplits,
+  computePixelSplits,
+  drawSliceToFile,
+  formatName,
+  getFilterFlags,
+  getPattern,
+  loadImages,
+} from './export/helpers';
 
 export interface SlicePreview {
   i: number; // source image index
@@ -21,14 +31,7 @@ export const exportImages = async (
   const zip = new JSZip();
 
   // 1) Load all images
-  const images: HTMLImageElement[] = [];
-  for (let i = 0; i < src.length; i++) {
-    const image = new Image();
-    const imageBlob = await fetch(src[i]).then((response) => response.blob());
-    image.src = URL.createObjectURL(imageBlob);
-    await new Promise((resolve) => (image.onload = resolve));
-    images.push(image);
-  }
+  const images = await loadImages(src);
 
   // 2) Build split candidates across all images
   type Candidate = {
@@ -41,57 +44,16 @@ export const exportImages = async (
     height: number; // in pixels
   };
 
-  const cleanUp = (splits: SplitLine[]) => {
-    let supplemented = [
-      { position: 0, size: 100 },
-      ...splits,
-      { position: 100, size: 100 },
-    ];
-    supplemented = supplemented.sort((a, b) => a.position - b.position);
-    supplemented = supplemented.filter(
-      (split, index) =>
-        index === 0 || split.position !== supplemented[index - 1].position
-    );
-    return supplemented;
-  };
-
-  const useFilters = !!state.exportUseFilters;
-  const minW = Math.max(1, state.exportMinWidthPx || 1);
-  const minH = Math.max(1, state.exportMinHeightPx || 1);
-  const maxW = Math.max(1, state.exportMaxWidthPx || Number.MAX_SAFE_INTEGER);
-  const maxH = Math.max(1, state.exportMaxHeightPx || Number.MAX_SAFE_INTEGER);
+  const useFiltersFlags = getFilterFlags(state);
 
   const candidates: Candidate[] = [];
   for (let i = 0; i < images.length; i++) {
     const image = images[i];
     const [hsplits, vsplits] = [
-      cleanUp(state.horizontalSplit),
-      cleanUp(state.verticalSplit),
+      cleanUpSplits(state.horizontalSplit),
+      cleanUpSplits(state.verticalSplit),
     ];
-    const percentSplits: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }[] = [];
-    for (let hi = 0; hi < hsplits.length - 1; hi++) {
-      for (let vj = 0; vj < vsplits.length - 1; vj++) {
-        const [currHSplit, nextHSplit] = [hsplits[hi], hsplits[hi + 1]];
-        const [currVSplit, nextVSplit] = [vsplits[vj], vsplits[vj + 1]];
-        percentSplits.push({
-          x: currVSplit.position,
-          y: currHSplit.position,
-          width: nextVSplit.position - currVSplit.position,
-          height: nextHSplit.position - currHSplit.position,
-        });
-      }
-    }
-    const pixelSplits = percentSplits.map((split) => ({
-      x: (split.x * image.width) / 100,
-      y: (split.y * image.height) / 100,
-      width: (split.width * image.width) / 100,
-      height: (split.height * image.height) / 100,
-    }));
+    const pixelSplits = computePixelSplits(image, hsplits, vsplits);
     pixelSplits.forEach((split, index) => {
       candidates.push({
         key: `${i}-${index}`,
@@ -106,20 +68,16 @@ export const exportImages = async (
   }
 
   // 3) Apply filters and whitelist
-  const filtered = candidates.filter((c) => {
-    if (!useFilters) return true;
-    if (
-      (state.exportUseMinWidth && c.width < minW) ||
-      (state.exportUseMinHeight && c.height < minH)
-    )
-      return false;
-    if (
-      (state.exportUseMaxWidth && c.width > maxW) ||
-      (state.exportUseMaxHeight && c.height > maxH)
-    )
-      return false;
-    return true;
-  });
+  const filtered = candidates.filter((c) =>
+    getFilterFlags(state).useFilters
+      ? !(
+          (useFiltersFlags.useMinW && c.width < useFiltersFlags.minW) ||
+          (useFiltersFlags.useMinH && c.height < useFiltersFlags.minH) ||
+          (useFiltersFlags.useMaxW && c.width > useFiltersFlags.maxW) ||
+          (useFiltersFlags.useMaxH && c.height > useFiltersFlags.maxH)
+        )
+      : true
+  );
 
   const finalSelected =
     options && options.whitelist
@@ -135,35 +93,21 @@ export const exportImages = async (
   finalSelected.forEach((c, idx) => sindexMap.set(c.key, idx));
 
   // 5) Create files only for finalSelected
-  const pattern =
-    (state.exportUseFilenamePattern
-      ? state.exportFilenamePattern
-      : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
+  const pattern = getPattern(state);
   const files: File[] = [];
   const filePromises = finalSelected.map((c) => {
     const image = images[c.i];
     const w = Math.floor(c.width);
     const h = Math.floor(c.height);
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const context = canvas.getContext('2d');
-    if (!context) return Promise.resolve<File | null>(null);
-    context.drawImage(image, c.x, c.y, w, h, 0, 0, w, h);
-    const name = pattern
-      .replace('{i}', String(c.i))
-      .replace('{index}', String(c.index))
-      .replace('{w}', String(w))
-      .replace('{h}', String(h))
-      .replace('{findex}', String(findexMap.get(c.key) ?? ''))
-      .replace('{sindex}', String(sindexMap.get(c.key) ?? ''));
-    return new Promise<File | null>((resolve) => {
-      canvas.toBlob((blob) => {
-        if (!blob) return resolve(null);
-        const file = new File([blob], name, { type: 'image/png' });
-        resolve(file);
-      });
+    const name = formatName(pattern, {
+      i: c.i,
+      index: c.index,
+      w,
+      h,
+      findex: findexMap.get(c.key) ?? '',
+      sindex: sindexMap.get(c.key) ?? '',
     });
+    return drawSliceToFile(image, c.x, c.y, w, h, name);
   });
 
   const created = await Promise.all(filePromises);
@@ -195,83 +139,31 @@ export const preparePreview = async (
 ): Promise<SlicePreview[]> => {
   const items: SlicePreview[] = [];
   for (let i = 0; i < src.length; i++) {
-    const image = new Image();
-    const imageBlob = await fetch(src[i]).then((response) => response.blob());
-    image.src = URL.createObjectURL(imageBlob);
-    await new Promise((resolve) => (image.onload = resolve));
+    const image = (await loadImages([src[i]]))[0];
 
     const files: SlicePreview[] = [];
 
-    const cleanUp = (splits: SplitLine[]) => {
-      let supplemented = [
-        { position: 0, size: 100 },
-        ...splits,
-        { position: 100, size: 100 },
-      ];
-      supplemented = supplemented.sort((a, b) => a.position - b.position);
-      supplemented = supplemented.filter(
-        (split, index) =>
-          index === 0 || split.position !== supplemented[index - 1].position
-      );
-      return supplemented;
-    };
-
     const [hsplits, vsplits] = [
-      cleanUp(state.horizontalSplit),
-      cleanUp(state.verticalSplit),
+      cleanUpSplits(state.horizontalSplit),
+      cleanUpSplits(state.verticalSplit),
     ];
-    const splits: { x: number; y: number; width: number; height: number }[] =
-      [];
-    for (let ii = 0; ii < hsplits.length - 1; ii++) {
-      for (let j = 0; j < vsplits.length - 1; j++) {
-        const [currHSplit, nextHSplit] = [hsplits[ii], hsplits[ii + 1]];
-        const [currVSplit, nextVSplit] = [vsplits[j], vsplits[j + 1]];
-        splits.push({
-          x: (currVSplit.position * image.width) / 100,
-          y: (currHSplit.position * image.height) / 100,
-          width:
-            ((nextVSplit.position - currVSplit.position) * image.width) / 100,
-          height:
-            ((nextHSplit.position - currHSplit.position) * image.height) / 100,
-        });
-      }
-    }
+    const splits = computePixelSplits(image, hsplits, vsplits);
 
-    const useFilters = !!state.exportUseFilters;
-    const minW = Math.max(1, state.exportMinWidthPx || 1);
-    const minH = Math.max(1, state.exportMinHeightPx || 1);
-    const maxW = Math.max(1, state.exportMaxWidthPx || Number.MAX_SAFE_INTEGER);
-    const maxH = Math.max(
-      1,
-      state.exportMaxHeightPx || Number.MAX_SAFE_INTEGER
-    );
-    const formatName = (idx: number, w: number, h: number) => {
-      const pattern =
-        (state.exportUseFilenamePattern
-          ? state.exportFilenamePattern
-          : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
-      return pattern
-        .replace('{i}', String(i))
-        .replace('{index}', String(idx))
-        .replace('{w}', String(w))
-        .replace('{h}', String(h));
-    };
+    const flags = getFilterFlags(state);
+    const pattern = getPattern(state);
 
     const previewPromises = splits.map((split, index) => {
       const w = Math.floor(split.width);
       const h = Math.floor(split.height);
-      if (useFilters) {
-        if (
-          (state.exportUseMinWidth && w < minW) ||
-          (state.exportUseMinHeight && h < minH)
-        )
-          return Promise.resolve<SlicePreview | null>(null);
-        if (
-          (state.exportUseMaxWidth && w > maxW) ||
-          (state.exportUseMaxHeight && h > maxH)
-        )
-          return Promise.resolve<SlicePreview | null>(null);
-      }
+      if (
+        flags.useFilters &&
+        ((flags.useMinW && w < flags.minW) ||
+          (flags.useMinH && h < flags.minH) ||
+          (flags.useMaxW && w > flags.maxW) ||
+          (flags.useMaxH && h > flags.maxH))
+      )
+        return Promise.resolve<SlicePreview | null>(null);
+
       const canvas = document.createElement('canvas');
       canvas.width = w;
       canvas.height = h;
@@ -279,14 +171,8 @@ export const preparePreview = async (
       if (!context) return Promise.resolve<SlicePreview | null>(null);
       context.drawImage(image, split.x, split.y, w, h, 0, 0, w, h);
       const dataUrl = canvas.toDataURL('image/png');
-      return Promise.resolve({
-        i,
-        index,
-        width: w,
-        height: h,
-        name: formatName(index, w, h),
-        dataUrl,
-      });
+      const name = formatName(pattern, { i, index, w, h });
+      return Promise.resolve({ i, index, width: w, height: h, name, dataUrl });
     });
 
     const previews = await Promise.all(previewPromises);

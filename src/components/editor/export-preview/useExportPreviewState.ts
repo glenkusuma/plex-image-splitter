@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { type SlicePreview, preparePreview } from '@/lib/export';
+import type { SlicePreview } from '@/lib/export';
 
 import { useEditor } from '@/store/editor';
+
+import { useExportPreviewActions } from './useExportPreviewActions';
+import { useFilters } from './useFilters';
 
 export const useExportPreviewState = () => {
   const { state, dispatch } = useEditor();
@@ -16,42 +19,52 @@ export const useExportPreviewState = () => {
   const [showOptions, setShowOptions] = useState(false);
 
   // Filter state (independent from export options until applied)
-  const [filtersEnabled, setFiltersEnabled] = useState<boolean>(false);
-  const [useMinW, setUseMinW] = useState<boolean>(false);
-  const [useMinH, setUseMinH] = useState<boolean>(false);
-  const [useMaxW, setUseMaxW] = useState<boolean>(false);
-  const [useMaxH, setUseMaxH] = useState<boolean>(false);
-  const [minW, setMinW] = useState<number>(1);
-  const [minH, setMinH] = useState<number>(1);
-  const [maxW, setMaxW] = useState<number>(Number.MAX_SAFE_INTEGER);
-  const [maxH, setMaxH] = useState<number>(Number.MAX_SAFE_INTEGER);
-
-  const filteredItems = useMemo(() => {
-    if (!filtersEnabled) return items;
-    return items.filter((p) => {
-      if (useMinW && p.width < minW) return false;
-      if (useMinH && p.height < minH) return false;
-      if (useMaxW && p.width > maxW) return false;
-      if (useMaxH && p.height > maxH) return false;
-      return true;
-    });
-  }, [
+  const {
     filtersEnabled,
-    items,
+    setFiltersEnabled,
     useMinW,
+    setUseMinW,
     useMinH,
+    setUseMinH,
     useMaxW,
+    setUseMaxW,
     useMaxH,
+    setUseMaxH,
     minW,
+    setMinW,
     minH,
+    setMinH,
     maxW,
+    setMaxW,
     maxH,
-  ]);
+    setMaxH,
+    filteredItems,
+  } = useFilters(items);
 
   const selectedCount = useMemo(
     () => Object.values(selected).filter(Boolean).length,
     [selected]
   );
+
+  // Index maps for preview filename pattern substitutions
+  const findexMap = useMemo(() => {
+    const m = new Map<string, number>();
+    filteredItems.forEach((p, idx) => m.set(`${p.i}-${p.index}`, idx));
+    return m;
+  }, [filteredItems]);
+
+  const sindexMap = useMemo(() => {
+    const m = new Map<string, number>();
+    let count = 0;
+    filteredItems.forEach((p) => {
+      const key = `${p.i}-${p.index}`;
+      if (selected[key]) {
+        m.set(key, count);
+        count += 1;
+      }
+    });
+    return m;
+  }, [filteredItems, selected]);
 
   const formatName = useCallback(
     (p: SlicePreview) => {
@@ -59,176 +72,67 @@ export const useExportPreviewState = () => {
         (state.exportUseFilenamePattern
           ? state.exportFilenamePattern
           : 'image-{i}-split-{index}.png') || 'image-{i}-split-{index}.png';
+      const key = `${p.i}-${p.index}`;
+      const findex = findexMap.get(key);
+      const sindex = sindexMap.get(key);
       return pattern
         .replace('{i}', String(p.i))
         .replace('{index}', String(p.index))
         .replace('{w}', String(p.width))
-        .replace('{h}', String(p.height));
+        .replace('{h}', String(p.height))
+        .replace('{findex}', findex !== undefined ? String(findex) : '')
+        .replace('{sindex}', sindex !== undefined ? String(sindex) : '');
     },
-    [state.exportUseFilenamePattern, state.exportFilenamePattern]
+    [
+      state.exportUseFilenamePattern,
+      state.exportFilenamePattern,
+      findexMap,
+      sindexMap,
+    ]
   );
 
-  const openPreview = useCallback(async () => {
-    setOpen(true);
-    setLoading(true);
-    const previews = await preparePreview(
-      state,
-      state.activeSrc ? [state.activeSrc] : []
-    );
-    setItems(previews);
-    const initial: Record<string, boolean> = {};
-    previews.forEach((p) => (initial[`${p.i}-${p.index}`] = true));
-    setSelected(initial);
-    setLoading(false);
-  }, [state]);
-
-  const regenerate = useCallback(async () => {
-    setLoading(true);
-    const previews = await preparePreview(
-      state,
-      state.activeSrc ? [state.activeSrc] : []
-    );
-    setItems(previews);
-    const initial: Record<string, boolean> = {};
-    previews.forEach((p) => (initial[`${p.i}-${p.index}`] = true));
-    setSelected(initial);
-    setLoading(false);
-  }, [state]);
-
-  const matchFromExportOptions = useCallback(() => {
-    setFiltersEnabled(!!state.exportUseFilters);
-    setUseMinW(!!state.exportUseMinWidth);
-    setUseMinH(!!state.exportUseMinHeight);
-    setUseMaxW(!!state.exportUseMaxWidth);
-    setUseMaxH(!!state.exportUseMaxHeight);
-    setMinW(Math.max(1, state.exportMinWidthPx || 1));
-    setMinH(Math.max(1, state.exportMinHeightPx || 1));
-    setMaxW(Math.max(1, state.exportMaxWidthPx || Number.MAX_SAFE_INTEGER));
-    setMaxH(Math.max(1, state.exportMaxHeightPx || Number.MAX_SAFE_INTEGER));
-  }, [state]);
-
-  const applyNaming = useCallback(() => {
-    dispatch({
-      type: 'SET_EXPORT_OPTIONS_FLAGS',
-      payload: {
-        useZipName: state.exportUseZipName,
-        useFilenamePattern: state.exportUseFilenamePattern,
-      },
-    });
-    dispatch({
-      type: 'SET_EXPORT_OPTIONS',
-      payload: {
-        zipName: state.exportZipName,
-        filenamePattern: state.exportFilenamePattern,
-      },
-    });
-  }, [
+  const {
+    openPreview,
+    regenerate,
+    matchFromExportOptions,
+    applyNaming,
+    resetFilters,
+    resetOptions,
+    applyFiltersToExport,
+    exportAll,
+    exportSelected,
+  } = useExportPreviewActions(
+    state,
     dispatch,
-    state.exportUseZipName,
-    state.exportUseFilenamePattern,
-    state.exportZipName,
-    state.exportFilenamePattern,
-  ]);
-
-  const resetFilters = useCallback(() => {
-    setFiltersEnabled(false);
-    setUseMinW(false);
-    setUseMinH(false);
-    setUseMaxW(false);
-    setUseMaxH(false);
-    setMinW(1);
-    setMinH(1);
-    setMaxW(Number.MAX_SAFE_INTEGER);
-    setMaxH(Number.MAX_SAFE_INTEGER);
-    dispatch({
-      type: 'SET_EXPORT_OPTIONS_FLAGS',
-      payload: {
-        useFilters: false,
-        useMinWidth: false,
-        useMinHeight: false,
-        useMaxWidth: false,
-        useMaxHeight: false,
-      },
-    });
-    dispatch({
-      type: 'SET_EXPORT_OPTIONS',
-      payload: { minWidthPx: 1, minHeightPx: 1 },
-    });
-    dispatch({
-      type: 'SET_EXPORT_MAX',
-      payload: {
-        maxWidthPx: Number.MAX_SAFE_INTEGER,
-        maxHeightPx: Number.MAX_SAFE_INTEGER,
-      },
-    });
-  }, [dispatch]);
-
-  const applyFiltersToExport = useCallback(() => {
-    dispatch({
-      type: 'SET_EXPORT_OPTIONS_FLAGS',
-      payload: {
-        useFilters: filtersEnabled,
-        useMinWidth: useMinW,
-        useMinHeight: useMinH,
-        useMaxWidth: useMaxW,
-        useMaxHeight: useMaxH,
-      },
-    });
-    dispatch({
-      type: 'SET_EXPORT_OPTIONS',
-      payload: { minWidthPx: minW, minHeightPx: minH },
-    });
-    dispatch({
-      type: 'SET_EXPORT_MAX',
-      payload: { maxWidthPx: maxW, maxHeightPx: maxH },
-    });
-  }, [
-    dispatch,
-    filtersEnabled,
-    useMinW,
-    useMinH,
-    useMaxW,
-    useMaxH,
-    minW,
-    minH,
-    maxW,
-    maxH,
-  ]);
-
-  const exportAll = useCallback(async () => {
-    const whitelist = new Set<string>();
-    filteredItems.forEach((p) => whitelist.add(`${p.i}-${p.index}`));
-    const blob = await (
-      await import('@/lib/export')
-    ).exportImages(state, state.activeSrc ? [state.activeSrc] : [], {
-      whitelist,
-    });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download =
-      (state.exportUseZipName ? state.exportZipName : 'export.zip') ||
-      'export.zip';
-    a.click();
-  }, [filteredItems, state]);
-
-  const exportSelected = useCallback(async () => {
-    const whitelist = new Set<string>();
-    filteredItems.forEach((p) => {
-      const key = `${p.i}-${p.index}`;
-      if (selected[key]) whitelist.add(key);
-    });
-    const blob = await (
-      await import('@/lib/export')
-    ).exportImages(state, state.activeSrc ? [state.activeSrc] : [], {
-      whitelist,
-    });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download =
-      (state.exportUseZipName ? state.exportZipName : 'export.zip') ||
-      'export.zip';
-    a.click();
-  }, [filteredItems, selected, state]);
+    {
+      setOpen,
+      setLoading,
+      setItems,
+      setSelected,
+      setFiltersEnabled,
+      setUseMinW,
+      setUseMinH,
+      setUseMaxW,
+      setUseMaxH,
+      setMinW,
+      setMinH,
+      setMaxW,
+      setMaxH,
+    },
+    {
+      filtersEnabled,
+      useMinW,
+      useMinH,
+      useMaxW,
+      useMaxH,
+      minW,
+      minH,
+      maxW,
+      maxH,
+    },
+    filteredItems,
+    selected
+  );
 
   return {
     // editor
@@ -278,6 +182,7 @@ export const useExportPreviewState = () => {
     matchFromExportOptions,
     applyNaming,
     resetFilters,
+    resetOptions,
     applyFiltersToExport,
     exportAll,
     exportSelected,

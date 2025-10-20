@@ -109,11 +109,26 @@ export function useCustomPresets() {
   });
 
   const exportCurrentState = () => {
+    // Resolve name: if empty, prompt user; else use typed name
+    let resolvedName = (newName || '').trim();
+    if (!resolvedName) {
+      const input = window.prompt(
+        'Enter preset name:',
+        `Preset ${presets.length + 1}`
+      );
+      if (!input || !input.trim()) {
+        showToast('Export cancelled: name is required', 'info');
+        return;
+      }
+      resolvedName = input.trim();
+      setNewName(resolvedName);
+    }
+
     const data = {
       meta: { tool: 'plex-image-splitter', kind: 'preset', version: 1 },
       preset: {
         id: uid(),
-        name: (newName || 'Preset ' + (presets.length + 1)).trim(),
+        name: resolvedName,
         data: toPresetData(),
         createdAt: now(),
       },
@@ -123,9 +138,15 @@ export function useCustomPresets() {
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'preset-current.json';
+    const safe = resolvedName
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    a.download = `plex-${safe || 'preset'}.json`;
     a.click();
-    showToast('Exported current state', 'info');
+    showToast(`Exported preset "${resolvedName}"`, 'info');
   };
 
   const importPresetFromFile = (f: File) => {

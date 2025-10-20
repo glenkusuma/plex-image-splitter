@@ -57,6 +57,7 @@ const EditorExportPreviewModal: React.FC = () => {
     matchFromExportOptions,
     applyNaming,
     resetFilters,
+    resetOptions,
     applyFiltersToExport,
     exportAll,
     exportSelected,
@@ -143,6 +144,10 @@ const EditorExportPreviewModal: React.FC = () => {
             })
           }
           onApplyNaming={applyNaming}
+          onReset={() => {
+            if (loading) return;
+            resetOptions();
+          }}
         />
         <FiltersPanel
           show={showFilters}

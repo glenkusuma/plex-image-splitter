@@ -30,7 +30,7 @@ export const LoadingSkeleton: React.FC = () => {
         }
       `}</style>
       <div className='px-2 py-3'>
-        <div className='mb-2 flex items-center gap-3'>
+        <div className='mb-2 flex items-center justify-center gap-3'>
           <svg
             className='h-5 w-5 animate-spin text-gray-300'
             viewBox='0 0 24 24'
