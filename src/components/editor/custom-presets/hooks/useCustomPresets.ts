@@ -108,21 +108,11 @@ export function useCustomPresets() {
     snapPx: state.snapPx,
   });
 
-  const exportCurrentState = () => {
-    // Resolve name: if empty, prompt user; else use typed name
-    let resolvedName = (newName || '').trim();
-    if (!resolvedName) {
-      const input = window.prompt(
-        'Enter preset name:',
-        `Preset ${presets.length + 1}`
-      );
-      if (!input || !input.trim()) {
-        showToast('Export cancelled: name is required', 'info');
-        return;
-      }
-      resolvedName = input.trim();
-      setNewName(resolvedName);
-    }
+  const exportCurrentState = (name?: string) => {
+    // Resolve name: prefer argument, fallback to current input, then default
+    const candidate = (name ?? newName).trim();
+    const resolvedName = candidate || `Preset ${presets.length + 1}`;
+    if (!candidate) setNewName(resolvedName);
 
     const data = {
       meta: { tool: 'plex-image-splitter', kind: 'preset', version: 1 },

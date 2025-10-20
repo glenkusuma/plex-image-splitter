@@ -107,16 +107,9 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
           size='sm'
           onClick={onMatchFromExportOptions}
           title='Match Preview filters to current Export Options'
-          aria-label='Match Preview filters to current Export Options'
           disabled={loading}
         >
-          <img
-            src='/images/svg/Match.svg'
-            alt='Match Preview filters to current Export Options'
-            width={20}
-            height={20}
-            style={{ filter: 'invert(1)' }}
-          />
+          Match from Export Options
         </Button>
       </div>
     </div>

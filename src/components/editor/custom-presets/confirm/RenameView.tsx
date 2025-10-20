@@ -41,6 +41,7 @@ const RenameView: React.FC<Props> = ({
         id='renamePresetName'
         name='renamePresetName'
         className='mb-3 w-full rounded bg-gray-800 px-2 py-1 text-white'
+        autoFocus
         value={renameState.value}
         onChange={(e) => renameState.setValue(e.target.value)}
       />

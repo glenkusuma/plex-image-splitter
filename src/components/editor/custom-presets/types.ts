@@ -22,6 +22,7 @@ export type PendingAction =
     }
   | { kind: 'save' }
   | { kind: 'rename'; payload: NamedPreset }
+  | { kind: 'export' }
   | null;
 
 export type ToastKind = 'success' | 'error' | 'info';

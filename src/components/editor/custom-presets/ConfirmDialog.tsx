@@ -5,6 +5,7 @@ import ModalShell from '@/components/ui/ModalShell';
 import ApplyView from './confirm/ApplyView';
 import ClearView from './confirm/ClearView';
 import DeleteView from './confirm/DeleteView';
+import ExportView from './confirm/ExportView';
 import ImportConfirmView from './confirm/ImportConfirmView';
 import OverwriteView from './confirm/OverwriteView';
 import RenameView from './confirm/RenameView';
@@ -26,6 +27,7 @@ type Props = {
   showToast: (message: string, kind?: 'success' | 'error' | 'info') => void;
   saveName: string;
   renameState: RenameState;
+  onExportByName?: (name: string) => void;
 };
 
 const ConfirmDialog: React.FC<Props> = ({
@@ -40,6 +42,7 @@ const ConfirmDialog: React.FC<Props> = ({
   showToast,
   saveName,
   renameState,
+  onExportByName,
 }) => {
   if (!action) return null;
 
@@ -48,6 +51,7 @@ const ConfirmDialog: React.FC<Props> = ({
     importConfirm: 'Import Presets',
     apply: 'Apply Preset',
     save: 'Save Preset',
+    export: 'Export Preset',
     delete: 'Delete Preset',
     clear: 'Clear All Presets',
     overwrite: 'Overwrite Preset',
@@ -149,6 +153,20 @@ const ConfirmDialog: React.FC<Props> = ({
           }}
           onCancel={onCancel}
           showToast={showToast}
+        />
+      )}
+
+      {action.kind === 'export' && (
+        <ExportView
+          defaultName={
+            (saveName || '').trim() || `Preset ${presets.length + 1}`
+          }
+          busy={busy}
+          onExport={(name) => {
+            onExportByName?.(name);
+            onCancel();
+          }}
+          onCancel={onCancel}
         />
       )}
 

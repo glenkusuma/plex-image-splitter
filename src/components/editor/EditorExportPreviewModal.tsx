@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
+import Confirmations from '@/components/editor/export-preview/Confirmations';
 import {
   FiltersBar,
   OptionsBar,
@@ -9,6 +10,7 @@ import Footer from '@/components/editor/export-preview/Footer';
 import Header from '@/components/editor/export-preview/Header';
 import PreviewTable from '@/components/editor/export-preview/PreviewTable';
 import { useExportPreviewState } from '@/components/editor/export-preview/useExportPreviewState';
+import { usePreviewKeybinds } from '@/components/editor/export-preview/usePreviewKeybinds';
 
 declare global {
   interface Window {
@@ -63,6 +65,18 @@ const EditorExportPreviewModal: React.FC = () => {
     exportSelected,
   } = useExportPreviewState();
 
+  // local notifications via simple ephemeral state
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const id = window.setTimeout(() => setToast(null), 2400);
+    return () => window.clearTimeout(id);
+  }, [toast]);
+
+  // confirmation dialogs
+  const [confirmMatch, setConfirmMatch] = useState(false);
+  const [confirmApplyNaming, setConfirmApplyNaming] = useState(false);
+
   useEffect(() => {
     window.__openExportPreview = openPreview;
     const onKey = (e: KeyboardEvent) => {
@@ -74,6 +88,17 @@ const EditorExportPreviewModal: React.FC = () => {
       document.removeEventListener('keydown', onKey);
     };
   }, [openPreview, setOpen]);
+
+  // Standard keybindings when modal is open
+  usePreviewKeybinds(
+    open,
+    loading,
+    filteredItems,
+    (next) => setSelected(next),
+    (updater) => setFullscreen(updater),
+    () => void regenerate(),
+    (v) => setOpen(v)
+  );
 
   if (!open) return null;
 
@@ -115,7 +140,7 @@ const EditorExportPreviewModal: React.FC = () => {
           setShowOptions={setShowOptions}
           onMatchFromExportOptions={() => {
             if (loading) return;
-            matchFromExportOptions();
+            setConfirmMatch(true);
           }}
         />
         <OptionsBar
@@ -148,7 +173,7 @@ const EditorExportPreviewModal: React.FC = () => {
               payload: { useFilenamePattern: v },
             })
           }
-          onApplyNaming={applyNaming}
+          onApplyNaming={() => setConfirmApplyNaming(true)}
           onReset={() => {
             if (loading) return;
             resetOptions();
@@ -191,11 +216,29 @@ const EditorExportPreviewModal: React.FC = () => {
           onExportAll={async () => {
             if (loading) return;
             await exportAll();
+            setToast('Exported all slices to zip');
           }}
           onExportSelected={async () => {
             if (loading) return;
             await exportSelected();
+            setToast('Exported selected slices to zip');
           }}
+        />
+
+        <Confirmations
+          confirmMatch={confirmMatch}
+          setConfirmMatch={setConfirmMatch}
+          onMatch={() => {
+            matchFromExportOptions();
+            setToast('Preview filters matched from Export Options');
+          }}
+          confirmApplyNaming={confirmApplyNaming}
+          setConfirmApplyNaming={setConfirmApplyNaming}
+          onApplyNaming={() => {
+            applyNaming();
+            setToast('Applied preview naming to Export Options');
+          }}
+          toast={toast}
         />
       </div>
     </div>

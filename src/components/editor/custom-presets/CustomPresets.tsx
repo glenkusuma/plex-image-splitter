@@ -96,7 +96,7 @@ const CustomPresets: React.FC = () => {
               <ModalToolbar
                 fullscreen={fullscreen}
                 setFullscreen={(v) => setFullscreen(v)}
-                onExport={exportCurrentState}
+                onExport={() => setPendingAction({ kind: 'export' })}
                 onImportFile={importPresetFromFile}
                 onClose={() => setOpenModal(false)}
               />
@@ -146,6 +146,7 @@ const CustomPresets: React.FC = () => {
                 showToast={showToast}
                 saveName={newName}
                 renameState={renameState}
+                onExportByName={(name) => exportCurrentState(name)}
               />
 
               <Toasts toasts={toasts} />

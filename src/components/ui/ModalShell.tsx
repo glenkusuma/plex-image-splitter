@@ -7,6 +7,8 @@ type ModalShellProps = {
   title: string;
   intent?: 'normal' | 'danger';
   size?: 'sm' | 'lg';
+  autoFocus?: boolean;
+  trapFocus?: boolean;
   children: React.ReactNode;
 };
 
@@ -16,10 +18,14 @@ const ModalShell: React.FC<ModalShellProps> = ({
   title,
   intent = 'normal',
   size = 'sm',
+  autoFocus = false,
+  trapFocus = false,
   children,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const prevActive = useRef<HTMLElement | null>(null);
+  const startTrapRef = useRef<HTMLSpanElement | null>(null);
+  const endTrapRef = useRef<HTMLSpanElement | null>(null);
 
   const tint = useMemo(
     () =>
@@ -40,8 +46,8 @@ const ModalShell: React.FC<ModalShellProps> = ({
   useEffect(() => {
     if (!open) return;
     prevActive.current = document.activeElement as HTMLElement | null;
-    // Focus container when opened
-    containerRef.current?.focus();
+    // Only focus container if explicitly requested
+    if (autoFocus) containerRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -51,7 +57,24 @@ const ModalShell: React.FC<ModalShellProps> = ({
       // Restore focus
       prevActive.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open, onClose, autoFocus]);
+
+  // Optional focus trap between start and end sentinels
+  useEffect(() => {
+    if (!open || !trapFocus) return;
+    const onFocus = (e: FocusEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        // Redirect focus back into the modal
+        const focusable = containerRef.current.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        (focusable || containerRef.current).focus();
+      }
+    };
+    document.addEventListener('focusin', onFocus);
+    return () => document.removeEventListener('focusin', onFocus);
+  }, [open, trapFocus]);
 
   return (
     <AnimatePresence>
@@ -80,6 +103,7 @@ const ModalShell: React.FC<ModalShellProps> = ({
                 'w-[95vw] sm:max-w-3xl md:max-w-5xl xl:max-w-7xl',
             ].join(' ')}
           >
+            <span ref={startTrapRef} tabIndex={0} className='sr-only' />
             <div
               className={[
                 'flex items-center justify-between bg-gradient-to-r px-4 py-2',
@@ -100,7 +124,7 @@ const ModalShell: React.FC<ModalShellProps> = ({
                 className='inline-flex h-7 w-7 items-center justify-center rounded hover:bg-white/10 focus-visible:ring focus-visible:ring-white/40'
               >
                 <img
-                  src='images/svg/Close.svg'
+                  src='/images/svg/Close.svg'
                   alt='Close'
                   width={16}
                   height={16}
@@ -109,6 +133,7 @@ const ModalShell: React.FC<ModalShellProps> = ({
               </button>
             </div>
             <div className='p-4'>{children}</div>
+            <span ref={endTrapRef} tabIndex={0} className='sr-only' />
           </motion.div>
         </motion.div>
       )}
